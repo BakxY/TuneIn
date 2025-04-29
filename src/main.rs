@@ -1,8 +1,12 @@
 use crossterm::event::{self, Event};
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols, text::Line, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType}, DefaultTerminal, Frame
+    DefaultTerminal, Frame,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
+    symbols,
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType},
 };
-use std::{io::Result, ops::Index, rc::Rc};
+use std::{io::Result, rc::Rc};
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -73,6 +77,17 @@ fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
     return (general_layout, midi_layout);
 }
 
+fn split_midi_layout(layout: Rect) -> Vec<Rect> {
+    let split_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+        .margin(2)
+        .split(layout)
+        .to_vec();
+
+    return split_layout;
+}
+
 fn render(frame: &mut Frame) {
     let (general_layout, midi_layout) = generate_layout(frame);
 
@@ -105,49 +120,49 @@ fn render(frame: &mut Frame) {
     );
 
     let dataset = Dataset::default()
-        .marker(symbols::Marker::Dot)
-        .style(Style::new().fg(Color::Cyan))
+        .marker(symbols::Marker::Braille)
+        .style(Style::new().fg(Color::Red))
         .graph_type(GraphType::Scatter)
         .data(&[
             (0., 0.),
-            (10., 29.38),
-            (20., 47.55),
-            (30., 47.55),
-            (40., 29.38),
-            (50., 0.),
-            (60., -29.38),
-            (70., -47.55),
-            (80., -47.55),
-            (90., -29.38),
-            (100., 0.),
+            (5.2632, 1.6235),
+            (10.5263, 3.0711),
+            (15.7895, 4.1858),
+            (21.0526, 4.8470),
+            (26.3158, 4.9829),
+            (31.5789, 4.5789),
+            (36.8421, 3.6786),
+            (42.1053, 2.3797),
+            (47.3684, 0.8230),
+            (52.6316, -0.8230),
+            (57.8947, -2.3797),
+            (63.1579, -3.6786),
+            (68.4211, -4.5789),
+            (73.6842, -4.9829),
+            (78.9474, -4.8470),
+            (84.2105, -4.1858),
+            (89.4737, -3.0711),
+            (94.7368, -1.6235),
+            (100.0, 0.),
         ]);
 
     for i in 0..midi_layout.len() {
-        let block = Block::new()
+        let root_block = Block::new()
             .border_type(BorderType::Thick)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White))
             .style(Style::default())
             .title("DDS ".to_string() + &(i + 1).to_string());
 
-        frame.render_widget(block.clone(), midi_layout[i]);
+        frame.render_widget(root_block.clone(), midi_layout[i]);
+
+        let split_layout = split_midi_layout(midi_layout[i]);
 
         let chart = Chart::new(vec![dataset.clone()])
-        .block(block)
-        .x_axis(
-            Axis::default()
-                .style(Style::default().gray())
-                .bounds([0.0, 100.0])
-                //.labels(["0".bold(), "50".into(), "100.0".bold()]),
-        )
-        .y_axis(
-            Axis::default()
-                .style(Style::default().gray())
-                .bounds([-50.0, 50.0])
-                //.labels(["0".bold(), "50".into(), "100.0".bold()]),
-        )
-        .hidden_legend_constraints((Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)));
+            .block(Block::new().borders(Borders::ALL))
+            .x_axis(Axis::default().bounds([0.0, 100.0]))
+            .y_axis(Axis::default().bounds([-5.0, 5.0]));
 
-        frame.render_widget(chart, midi_layout[i]);
+        frame.render_widget(chart, split_layout[0]);
     }
 }
