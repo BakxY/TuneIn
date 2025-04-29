@@ -2,11 +2,10 @@ use crossterm::event::{self, Event};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{Block, BorderType, Borders, LineGauge},
+    style::{Color, Style},
+    widgets::{Block, BorderType, Borders},
 };
-use std::{io::Result, rc::Rc};
+use std::{io::Result, ops::Index, rc::Rc};
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -82,7 +81,7 @@ fn render(frame: &mut Frame) {
 
     frame.render_widget(
         Block::new()
-            .border_type(BorderType::Rounded)
+            .border_type(BorderType::Thick)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White))
             .style(Style::default())
@@ -91,7 +90,7 @@ fn render(frame: &mut Frame) {
     );
     frame.render_widget(
         Block::new()
-            .border_type(BorderType::Rounded)
+            .border_type(BorderType::Thick)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White))
             .style(Style::default())
@@ -100,7 +99,7 @@ fn render(frame: &mut Frame) {
     );
     frame.render_widget(
         Block::new()
-            .border_type(BorderType::Rounded)
+            .border_type(BorderType::Thick)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White))
             .style(Style::default())
@@ -108,15 +107,15 @@ fn render(frame: &mut Frame) {
         general_layout[2],
     );
 
-    for midi in midi_layout {
+    for i in 0..midi_layout.len() {
         frame.render_widget(
             Block::new()
-                .border_type(BorderType::Rounded)
+                .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::White))
                 .style(Style::default())
-                .title("Midi"),
-            midi,
+                .title("DDS ".to_string() + &(i + 1).to_string()),
+            midi_layout[i],
         );
     }
 }
