@@ -1,9 +1,6 @@
 use crossterm::event::{self, Event};
 use ratatui::{
-    DefaultTerminal, Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders},
+    layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols, text::Line, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType}, DefaultTerminal, Frame
 };
 use std::{io::Result, ops::Index, rc::Rc};
 
@@ -107,15 +104,50 @@ fn render(frame: &mut Frame) {
         general_layout[2],
     );
 
+    let dataset = Dataset::default()
+        .marker(symbols::Marker::Dot)
+        .style(Style::new().fg(Color::Cyan))
+        .graph_type(GraphType::Scatter)
+        .data(&[
+            (0., 0.),
+            (10., 29.38),
+            (20., 47.55),
+            (30., 47.55),
+            (40., 29.38),
+            (50., 0.),
+            (60., -29.38),
+            (70., -47.55),
+            (80., -47.55),
+            (90., -29.38),
+            (100., 0.),
+        ]);
+
     for i in 0..midi_layout.len() {
-        frame.render_widget(
-            Block::new()
-                .border_type(BorderType::Thick)
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
-                .style(Style::default())
-                .title("DDS ".to_string() + &(i + 1).to_string()),
-            midi_layout[i],
-        );
+        let block = Block::new()
+            .border_type(BorderType::Thick)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White))
+            .style(Style::default())
+            .title("DDS ".to_string() + &(i + 1).to_string());
+
+        frame.render_widget(block.clone(), midi_layout[i]);
+
+        let chart = Chart::new(vec![dataset.clone()])
+        .block(block)
+        .x_axis(
+            Axis::default()
+                .style(Style::default().gray())
+                .bounds([0.0, 100.0])
+                //.labels(["0".bold(), "50".into(), "100.0".bold()]),
+        )
+        .y_axis(
+            Axis::default()
+                .style(Style::default().gray())
+                .bounds([-50.0, 50.0])
+                //.labels(["0".bold(), "50".into(), "100.0".bold()]),
+        )
+        .hidden_legend_constraints((Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)));
+
+        frame.render_widget(chart, midi_layout[i]);
     }
 }
