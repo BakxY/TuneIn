@@ -9,7 +9,7 @@ use ratatui::{
         Table,
     },
 };
-use std::{io::Result, rc::Rc, time::Duration};
+use std::{io::Result, rc::Rc, time::{Duration, Instant}};
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
 }
 
 struct App {
-    data: [(f64, f64); 20],
+    data: [(f64, f64); 19],
 }
 
 impl App {
@@ -44,7 +44,6 @@ impl App {
             (84.2105, -4.1858),
             (89.4737, -3.0711),
             (94.7368, -1.6235),
-            (100.0, 0.),
         ];
 
         Self {
@@ -52,17 +51,36 @@ impl App {
         }
     }
 
-    fn run(self, mut terminal: DefaultTerminal) -> Result<()> {
-        
+    fn cycle_sin_data(&mut self) {
+        let cycled_item = self.data[0].1;
+
+        for i in 0..self.data.len() - 1 {
+            self.data[i].1 = self.data[i + 1].1;
+        }
+
+        self.data[self.data.len() - 1].1 = cycled_item;
+    }
+
+    fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
+        let tick_rate = Duration::from_millis(10);
+        let mut last_tick = Instant::now();
+
         loop {
-            //terminal.draw(render)?;
             let _ = terminal.draw(|frame| self.draw(frame));
-            if event::poll(Duration::from_millis(100))? {
+            if event::poll(tick_rate)? {
                 if matches!(event::read()?, Event::Key(_)) {
                     break Ok(());
                 }
             }
+            if last_tick.elapsed() >= tick_rate {
+                self.on_tick();
+                last_tick = Instant::now();
+            }
         }
+    }
+
+    fn on_tick(&mut self) {
+        self.cycle_sin_data();
     }
 
     fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
