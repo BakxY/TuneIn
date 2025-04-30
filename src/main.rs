@@ -2,9 +2,9 @@ use crossterm::event::{self, Event};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType},
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListDirection},
 };
 use std::{io::Result, rc::Rc};
 
@@ -122,7 +122,7 @@ fn render(frame: &mut Frame) {
     let dataset = Dataset::default()
         .marker(symbols::Marker::Braille)
         .style(Style::new().fg(Color::Red))
-        .graph_type(GraphType::Scatter)
+        .graph_type(GraphType::Line)
         .data(&[
             (0., 0.),
             (5.2632, 1.6235),
@@ -146,6 +146,10 @@ fn render(frame: &mut Frame) {
             (100.0, 0.),
         ]);
 
+    let list = List::new(["> Tone", "> Frequency", "> Velocity"])
+        .style(Style::new().white())
+        .direction(ListDirection::TopToBottom);
+
     for i in 0..midi_layout.len() {
         let root_block = Block::new()
             .border_type(BorderType::Thick)
@@ -164,5 +168,6 @@ fn render(frame: &mut Frame) {
             .y_axis(Axis::default().bounds([-5.0, 5.0]));
 
         frame.render_widget(chart, split_layout[0]);
+        frame.render_widget(list.clone(), split_layout[1]);
     }
 }
