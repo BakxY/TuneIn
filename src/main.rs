@@ -4,7 +4,10 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListDirection},
+    widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListDirection, Row,
+        Table,
+    },
 };
 use std::{io::Result, rc::Rc};
 
@@ -146,9 +149,20 @@ fn render(frame: &mut Frame) {
             (100.0, 0.),
         ]);
 
-    let list = List::new(["> Tone", "> Frequency", "> Velocity"])
+    let rows = [
+        Row::new(vec!["Note", "IDFK"]),
+        Row::new(vec!["Freq", "69 kHz"]),
+        Row::new(vec!["Atten", "2"]),
+    ];
+    // Columns widths are constrained in the same way as Layout...
+    let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
+    let table = Table::new(rows, widths)
+        // ...and they can be separated by a fixed spacing.
+        .column_spacing(1)
+        // You can set the style of the entire Table.
         .style(Style::new().white())
-        .direction(ListDirection::TopToBottom);
+        // As any other widget, a Table can be wrapped in a Block.
+        .block(Block::new());
 
     for i in 0..midi_layout.len() {
         let root_block = Block::new()
@@ -168,6 +182,6 @@ fn render(frame: &mut Frame) {
             .y_axis(Axis::default().bounds([-5.0, 5.0]));
 
         frame.render_widget(chart, split_layout[0]);
-        frame.render_widget(list.clone(), split_layout[1]);
+        frame.render_widget(table.clone(), split_layout[1]);
     }
 }
