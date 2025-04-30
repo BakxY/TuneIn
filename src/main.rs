@@ -4,12 +4,13 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     symbols,
-    widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row,
-        Table,
-    },
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table},
 };
-use std::{io::Result, rc::Rc, time::{Duration, Instant}};
+use std::{
+    io::Result,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -19,12 +20,38 @@ fn main() -> Result<()> {
 }
 
 struct App {
-    data: [(f64, f64); 19],
+    dds_signal_data: [[(f64, f64); 19]; 10],
 }
 
-impl App {
-    fn new() -> Self {
-        let data =  [
+struct DdsSignal {}
+
+impl DdsSignal {
+    fn get_off_signal() -> [(f64, f64); 19] {
+        return [
+            (0., 0.),
+            (5.2632, 0.),
+            (10.5263, 0.),
+            (15.7895, 0.),
+            (21.0526, 0.),
+            (26.3158, 0.),
+            (31.5789, 0.),
+            (36.8421, 0.),
+            (42.1053, 0.),
+            (47.3684, 0.),
+            (52.6316, 0.),
+            (57.8947, 0.),
+            (63.1579, 0.),
+            (68.4211, 0.),
+            (73.6842, 0.),
+            (78.9474, 0.),
+            (84.2105, 0.),
+            (89.4737, 0.),
+            (100., 0.),
+        ];
+    }
+
+    fn get_sin_signal() -> [(f64, f64); 19] {
+        return [
             (0., 0.),
             (5.2632, 1.6235),
             (10.5263, 3.0711),
@@ -45,20 +72,32 @@ impl App {
             (89.4737, -3.0711),
             (94.7368, -1.6235),
         ];
+    }
+}
+
+impl App {
+    fn new() -> Self {
+        let mut default_data: [[(f64, f64); 19]; 10] = [[(0_f64, 0_f64); 19]; 10];
+
+        for i in 0..10 {
+            default_data[i] = DdsSignal::get_off_signal();
+        }
+
+        default_data[0] = DdsSignal::get_sin_signal();
 
         Self {
-            data,
+            dds_signal_data: default_data,
         }
     }
 
-    fn cycle_sin_data(&mut self) {
-        let cycled_item = self.data[0].1;
+    fn cycle_sin_data(&mut self, id: usize) {
+        let cycled_item = self.dds_signal_data[id][0].1;
 
-        for i in 0..self.data.len() - 1 {
-            self.data[i].1 = self.data[i + 1].1;
+        for i in 0..self.dds_signal_data[id].len() - 1 {
+            self.dds_signal_data[id][i].1 = self.dds_signal_data[id][i + 1].1;
         }
 
-        self.data[self.data.len() - 1].1 = cycled_item;
+        self.dds_signal_data[id][self.dds_signal_data[id].len() - 1].1 = cycled_item;
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
@@ -80,7 +119,7 @@ impl App {
     }
 
     fn on_tick(&mut self) {
-        self.cycle_sin_data();
+        self.cycle_sin_data(0);
     }
 
     fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
@@ -178,12 +217,6 @@ impl App {
             general_layout[2],
         );
 
-        let dataset = Dataset::default()
-            .marker(symbols::Marker::Braille)
-            .style(Style::new().fg(Color::Red))
-            .graph_type(GraphType::Line)
-            .data(&self.data);
-
         let rows = [
             Row::new(vec!["Note", "IDFK"]),
             Row::new(vec!["Freq", "69 kHz"]),
@@ -210,6 +243,12 @@ impl App {
             frame.render_widget(root_block.clone(), midi_layout[i]);
 
             let split_layout = App::split_midi_layout(midi_layout[i]);
+
+            let dataset = Dataset::default()
+                .marker(symbols::Marker::Braille)
+                .style(Style::new().fg(Color::Red))
+                .graph_type(GraphType::Line)
+                .data(&self.dds_signal_data[i]);
 
             let chart = Chart::new(vec![dataset.clone()])
                 .block(Block::new().borders(Borders::ALL))
