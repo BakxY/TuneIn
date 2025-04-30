@@ -5,128 +5,26 @@ use ratatui::{
     style::{Color, Style, Stylize},
     symbols,
     widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListDirection, Row,
+        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row,
         Table,
     },
 };
-use std::{io::Result, rc::Rc};
+use std::{io::Result, rc::Rc, time::Duration};
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
-    let result = run(terminal);
+    let result = App::new().run(terminal);
     ratatui::restore();
     result
 }
 
-fn run(mut terminal: DefaultTerminal) -> Result<()> {
-    loop {
-        terminal.draw(render)?;
-        if matches!(event::read()?, Event::Key(_)) {
-            break Ok(());
-        }
-    }
+struct App {
+    data: [(f64, f64); 20],
 }
 
-fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
-    let vertical_temp_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
-        .split(frame.area());
-
-    let general_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(33),
-            Constraint::Percentage(33),
-            Constraint::Percentage(33),
-        ])
-        .split(vertical_temp_layout[0]);
-
-    let midi_temp_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(vertical_temp_layout[1]);
-
-    let mut midi_layout: Vec<Rect> = Vec::new();
-
-    midi_layout.append(
-        &mut Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-            ])
-            .split(midi_temp_layout[0])
-            .to_vec(),
-    );
-
-    midi_layout.append(
-        &mut Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-                Constraint::Percentage(20),
-            ])
-            .split(midi_temp_layout[1])
-            .to_vec(),
-    );
-
-    return (general_layout, midi_layout);
-}
-
-fn split_midi_layout(layout: Rect) -> Vec<Rect> {
-    let split_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .margin(2)
-        .split(layout)
-        .to_vec();
-
-    return split_layout;
-}
-
-fn render(frame: &mut Frame) {
-    let (general_layout, midi_layout) = generate_layout(frame);
-
-    frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::White))
-            .style(Style::default())
-            .title("Info"),
-        general_layout[0],
-    );
-    frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::White))
-            .style(Style::default())
-            .title("Options"),
-        general_layout[1],
-    );
-    frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::White))
-            .style(Style::default())
-            .title("Communication"),
-        general_layout[2],
-    );
-
-    let dataset = Dataset::default()
-        .marker(symbols::Marker::Braille)
-        .style(Style::new().fg(Color::Red))
-        .graph_type(GraphType::Line)
-        .data(&[
+impl App {
+    fn new() -> Self {
+        let data =  [
             (0., 0.),
             (5.2632, 1.6235),
             (10.5263, 3.0711),
@@ -147,41 +45,161 @@ fn render(frame: &mut Frame) {
             (89.4737, -3.0711),
             (94.7368, -1.6235),
             (100.0, 0.),
-        ]);
+        ];
 
-    let rows = [
-        Row::new(vec!["Note", "IDFK"]),
-        Row::new(vec!["Freq", "69 kHz"]),
-        Row::new(vec!["Atten", "2"]),
-    ];
-    // Columns widths are constrained in the same way as Layout...
-    let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
-    let table = Table::new(rows, widths)
-        // ...and they can be separated by a fixed spacing.
-        .column_spacing(1)
-        // You can set the style of the entire Table.
-        .style(Style::new().white())
-        // As any other widget, a Table can be wrapped in a Block.
-        .block(Block::new());
+        Self {
+            data,
+        }
+    }
 
-    for i in 0..midi_layout.len() {
-        let root_block = Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::White))
-            .style(Style::default())
-            .title("DDS ".to_string() + &(i + 1).to_string());
+    fn run(self, mut terminal: DefaultTerminal) -> Result<()> {
+        
+        loop {
+            //terminal.draw(render)?;
+            let _ = terminal.draw(|frame| self.draw(frame));
+            if event::poll(Duration::from_millis(100))? {
+                if matches!(event::read()?, Event::Key(_)) {
+                    break Ok(());
+                }
+            }
+        }
+    }
 
-        frame.render_widget(root_block.clone(), midi_layout[i]);
+    fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
+        let vertical_temp_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
+            .split(frame.area());
 
-        let split_layout = split_midi_layout(midi_layout[i]);
+        let general_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+                Constraint::Percentage(34),
+            ])
+            .split(vertical_temp_layout[0]);
 
-        let chart = Chart::new(vec![dataset.clone()])
-            .block(Block::new().borders(Borders::ALL))
-            .x_axis(Axis::default().bounds([0.0, 100.0]))
-            .y_axis(Axis::default().bounds([-5.0, 5.0]));
+        let midi_temp_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(vertical_temp_layout[1]);
 
-        frame.render_widget(chart, split_layout[0]);
-        frame.render_widget(table.clone(), split_layout[1]);
+        let mut midi_layout: Vec<Rect> = Vec::new();
+
+        midi_layout.append(
+            &mut Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(vec![
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                ])
+                .split(midi_temp_layout[0])
+                .to_vec(),
+        );
+
+        midi_layout.append(
+            &mut Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(vec![
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(20),
+                ])
+                .split(midi_temp_layout[1])
+                .to_vec(),
+        );
+
+        return (general_layout, midi_layout);
+    }
+
+    fn split_midi_layout(layout: Rect) -> Vec<Rect> {
+        let split_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .margin(2)
+            .split(layout)
+            .to_vec();
+
+        return split_layout;
+    }
+
+    fn draw(&self, frame: &mut Frame) {
+        let (general_layout, midi_layout) = App::generate_layout(frame);
+
+        frame.render_widget(
+            Block::new()
+                .border_type(BorderType::Thick)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::White))
+                .style(Style::default())
+                .title("Info"),
+            general_layout[0],
+        );
+        frame.render_widget(
+            Block::new()
+                .border_type(BorderType::Thick)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::White))
+                .style(Style::default())
+                .title("Options"),
+            general_layout[1],
+        );
+        frame.render_widget(
+            Block::new()
+                .border_type(BorderType::Thick)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::White))
+                .style(Style::default())
+                .title("Communication"),
+            general_layout[2],
+        );
+
+        let dataset = Dataset::default()
+            .marker(symbols::Marker::Braille)
+            .style(Style::new().fg(Color::Red))
+            .graph_type(GraphType::Line)
+            .data(&self.data);
+
+        let rows = [
+            Row::new(vec!["Note", "IDFK"]),
+            Row::new(vec!["Freq", "69 kHz"]),
+            Row::new(vec!["Atten", "2"]),
+        ];
+        // Columns widths are constrained in the same way as Layout...
+        let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
+        let table = Table::new(rows, widths)
+            // ...and they can be separated by a fixed spacing.
+            .column_spacing(1)
+            // You can set the style of the entire Table.
+            .style(Style::new().white())
+            // As any other widget, a Table can be wrapped in a Block.
+            .block(Block::new());
+
+        for i in 0..midi_layout.len() {
+            let root_block = Block::new()
+                .border_type(BorderType::Thick)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::White))
+                .style(Style::default())
+                .title("DDS ".to_string() + &(i + 1).to_string());
+
+            frame.render_widget(root_block.clone(), midi_layout[i]);
+
+            let split_layout = App::split_midi_layout(midi_layout[i]);
+
+            let chart = Chart::new(vec![dataset.clone()])
+                .block(Block::new().borders(Borders::ALL))
+                .x_axis(Axis::default().bounds([0.0, 100.0]))
+                .y_axis(Axis::default().bounds([-5.0, 5.0]));
+
+            frame.render_widget(chart, split_layout[0]);
+            frame.render_widget(table.clone(), split_layout[1]);
+        }
     }
 }
