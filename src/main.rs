@@ -12,6 +12,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod serial;
+
 fn main() -> Result<()> {
     let terminal = ratatui::init();
     let result = TuneIn::new().run(terminal);
