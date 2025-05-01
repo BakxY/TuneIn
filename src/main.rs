@@ -23,6 +23,8 @@ fn main() -> Result<()> {
 
 struct TuneIn {
     dds_signal_data: [[(f64, f64); 19]; 10],
+    dds_signal_freq: [f64; 10],
+    dds_signal_attenu: [u64; 10],
 }
 
 impl TuneIn {
@@ -37,6 +39,8 @@ impl TuneIn {
 
         Self {
             dds_signal_data: default_data,
+            dds_signal_freq: [30.; 10],
+            dds_signal_attenu: [0; 10],
         }
     }
 
