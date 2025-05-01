@@ -14,12 +14,12 @@ use std::{
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
-    let result = App::new().run(terminal);
+    let result = TuneIn::new().run(terminal);
     ratatui::restore();
     result
 }
 
-struct App {
+struct TuneIn {
     dds_signal_data: [[(f64, f64); 19]; 10],
 }
 
@@ -75,7 +75,7 @@ impl DdsSignal {
     }
 }
 
-impl App {
+impl TuneIn {
     fn new() -> Self {
         let mut default_data: [[(f64, f64); 19]; 10] = [[(0_f64, 0_f64); 19]; 10];
 
@@ -187,7 +187,7 @@ impl App {
     }
 
     fn draw(&self, frame: &mut Frame) {
-        let (general_layout, midi_layout) = App::generate_layout(frame);
+        let (general_layout, midi_layout) = TuneIn::generate_layout(frame);
 
         frame.render_widget(
             Block::new()
@@ -242,7 +242,7 @@ impl App {
 
             frame.render_widget(root_block.clone(), midi_layout[i]);
 
-            let split_layout = App::split_midi_layout(midi_layout[i]);
+            let split_layout = TuneIn::split_midi_layout(midi_layout[i]);
 
             let dataset = Dataset::default()
                 .marker(symbols::Marker::Braille)
