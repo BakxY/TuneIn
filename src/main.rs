@@ -1,4 +1,5 @@
 use crossterm::event::{self, Event};
+use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -12,7 +13,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub mod dds_signal;
+pub mod dds_data;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -22,36 +23,24 @@ fn main() -> Result<()> {
 }
 
 struct TuneIn {
-    dds_signal_data: [[(f64, f64); 19]; 10],
-    dds_signal_freq: [f64; 10],
-    dds_signal_attenu: [u64; 10],
+    dds_config: [dds_data::DdsData; 10],
 }
 
 impl TuneIn {
     fn new() -> Self {
-        let mut default_data: [[(f64, f64); 19]; 10] = [[(0_f64, 0_f64); 19]; 10];
-
-        for i in 0..10 {
-            default_data[i] = dds_signal::get_off_signal();
-        }
-
-        default_data[0] = dds_signal::get_sin_signal();
-
         Self {
-            dds_signal_data: default_data,
-            dds_signal_freq: [30.; 10],
-            dds_signal_attenu: [0; 10],
+            dds_config: [DdsData::new(); 10],
         }
     }
 
     fn cycle_sin_data(&mut self, id: usize) {
-        let cycled_item = self.dds_signal_data[id][0].1;
+        let cycled_item = self.dds_config[id].signal_data[0].1;
 
-        for i in 0..self.dds_signal_data[id].len() - 1 {
-            self.dds_signal_data[id][i].1 = self.dds_signal_data[id][i + 1].1;
+        for i in 0..self.dds_config[id].signal_data.len() - 1 {
+            self.dds_config[id].signal_data[i].1 = self.dds_config[id].signal_data[i + 1].1;
         }
 
-        self.dds_signal_data[id][self.dds_signal_data[id].len() - 1].1 = cycled_item;
+        self.dds_config[id].signal_data[self.dds_config[id].signal_data.len() - 1].1 = cycled_item;
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
@@ -199,7 +188,7 @@ impl TuneIn {
                 .marker(symbols::Marker::Braille)
                 .style(Style::new().fg(Color::Red))
                 .graph_type(GraphType::Line)
-                .data(&self.dds_signal_data[i]);
+                .data(&self.dds_config[i].signal_data);
 
             let chart = Chart::new(vec![dataset.clone()])
                 .block(Block::new().borders(Borders::ALL))
