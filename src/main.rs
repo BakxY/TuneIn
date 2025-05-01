@@ -222,14 +222,11 @@ impl TuneIn {
             Row::new(vec!["Freq", "69 kHz"]),
             Row::new(vec!["Atten", "2"]),
         ];
-        // Columns widths are constrained in the same way as Layout...
+
         let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
         let table = Table::new(rows, widths)
-            // ...and they can be separated by a fixed spacing.
             .column_spacing(1)
-            // You can set the style of the entire Table.
             .style(Style::new().white())
-            // As any other widget, a Table can be wrapped in a Block.
             .block(Block::new());
 
         for i in 0..midi_layout.len() {
