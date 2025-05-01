@@ -33,19 +33,21 @@ impl TuneIn {
         }
     }
 
-    fn cycle_sin_data(&mut self, id: usize) {
-        let cycled_item = self.dds_config[id].signal_data[0].1;
+    fn cycle_sin_data(dds: &mut dds_data::DdsData) {
+        let cycled_item = dds.signal_data[0].1;
 
-        for i in 0..self.dds_config[id].signal_data.len() - 1 {
-            self.dds_config[id].signal_data[i].1 = self.dds_config[id].signal_data[i + 1].1;
+        for i in 0..dds.signal_data.len() - 1 {
+            dds.signal_data[i].1 = dds.signal_data[i + 1].1;
         }
 
-        self.dds_config[id].signal_data[self.dds_config[id].signal_data.len() - 1].1 = cycled_item;
+        dds.signal_data[dds.signal_data.len() - 1].1 = cycled_item;
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let tick_rate = Duration::from_millis(10);
         let mut last_tick = Instant::now();
+
+        self.dds_config[0].enable_signal();
 
         loop {
             let _ = terminal.draw(|frame| self.draw(frame));
@@ -62,7 +64,12 @@ impl TuneIn {
     }
 
     fn on_tick(&mut self) {
-        self.cycle_sin_data(0);
+        for i in 0..self.dds_config.len() - 1 {
+            if self.dds_config[i].on && self.dds_config[i].last_cycle + Duration::from_millis(10) < Instant::now() {
+                self.dds_config[i].last_cycle = Instant::now();
+                Self::cycle_sin_data(&mut self.dds_config[i]);
+            }
+        }
     }
 
     fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {

@@ -1,8 +1,11 @@
+use std::time::Instant;
+
 #[derive(Copy, Clone)]
 pub struct DdsData {
     freq: f64,
+    pub last_cycle: Instant,
     attenu: u32,
-    on: bool,
+    pub on: bool,
     pub signal_data: [(f64, f64); 19],
 }
 
@@ -10,6 +13,7 @@ impl DdsData {
     pub fn new() -> Self {
         Self {
             freq: 0.,
+            last_cycle: Instant::now(),
             attenu: 0,
             on: false,
             signal_data: get_off_signal()
