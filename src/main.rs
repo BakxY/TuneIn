@@ -163,18 +163,6 @@ impl TuneIn {
             general_layout[2],
         );
 
-        let rows = [
-            Row::new(vec!["Note", "IDFK"]),
-            Row::new(vec!["Freq", "69 kHz"]),
-            Row::new(vec!["Atten", "2"]),
-        ];
-
-        let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
-        let table = Table::new(rows, widths)
-            .column_spacing(1)
-            .style(Style::new().white())
-            .block(Block::new());
-
         for i in 0..midi_layout.len() {
             let root_block = Block::new()
                 .border_type(BorderType::Thick)
@@ -199,6 +187,22 @@ impl TuneIn {
                 .y_axis(Axis::default().bounds([-5.0, 5.0]));
 
             frame.render_widget(chart, split_layout[0]);
+
+            let freq_str = &format!("{:.2} Hz", self.dds_config[i].freq);
+            let attenu_str = &format!("{:.2}", self.dds_config[i].attenu);
+
+            let rows = [
+                Row::new(vec!["Note", "IDFK"]),
+                Row::new(vec!["Freq", freq_str]),
+                Row::new(vec!["Atten", attenu_str]),
+            ];
+
+            let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
+            let table = Table::new(rows, widths)
+                .column_spacing(1)
+                .style(Style::new().white())
+                .block(Block::new());
+
             frame.render_widget(table.clone(), split_layout[1]);
         }
     }
