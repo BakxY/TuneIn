@@ -1,10 +1,10 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone)]
 pub struct DdsData {
-    freq: f64,
+    pub freq: f64,
     pub last_cycle: Instant,
-    attenu: u32,
+    pub attenu: u32,
     pub on: bool,
     pub signal_data: [(f64, f64); 19],
 }
@@ -77,4 +77,22 @@ pub fn get_sin_signal() -> [(f64, f64); 19] {
         (89.4737, -3.0711),
         (94.7368, -1.6235),
     ];
+}
+
+const MIN_FREQ: f64 = 4.08796875;
+const MAX_FREQ: f64 = 6272.0;
+
+const MIN_DELAY: Duration = Duration::from_millis(1);
+const MAX_DELAY: Duration = Duration::from_millis(100);
+
+pub fn convert_freq_to_tick_delay(freq: f64) -> Duration {
+    if freq >= MAX_FREQ {
+        return MAX_DELAY;
+    }
+    else if freq <= MIN_FREQ {
+        return MIN_DELAY;
+    }
+    else {
+        return MAX_DELAY - Duration::mul_f64(MAX_DELAY - MIN_DELAY, (freq - MIN_FREQ) / (MAX_FREQ - MIN_FREQ));
+    }    
 }

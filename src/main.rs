@@ -44,10 +44,14 @@ impl TuneIn {
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        let tick_rate = Duration::from_millis(10);
+        let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
         self.dds_config[0].enable_signal();
+        self.dds_config[0].freq = 5.;
+
+        self.dds_config[1].enable_signal();
+        self.dds_config[1].freq = 6000.;
 
         loop {
             let _ = terminal.draw(|frame| self.draw(frame));
@@ -65,7 +69,11 @@ impl TuneIn {
 
     fn on_tick(&mut self) {
         for i in 0..self.dds_config.len() - 1 {
-            if self.dds_config[i].on && self.dds_config[i].last_cycle + Duration::from_millis(10) < Instant::now() {
+            if self.dds_config[i].on
+                && self.dds_config[i].last_cycle
+                    + dds_data::convert_freq_to_tick_delay(self.dds_config[i].freq)
+                    < Instant::now()
+            {
                 self.dds_config[i].last_cycle = Instant::now();
                 Self::cycle_sin_data(&mut self.dds_config[i]);
             }
@@ -97,13 +105,7 @@ impl TuneIn {
         midi_layout.append(
             &mut Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints(vec![
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                ])
+                .constraints(vec![Constraint::Percentage(20); 5])
                 .split(midi_temp_layout[0])
                 .to_vec(),
         );
@@ -111,13 +113,7 @@ impl TuneIn {
         midi_layout.append(
             &mut Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints(vec![
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                ])
+                .constraints(vec![Constraint::Percentage(20); 5])
                 .split(midi_temp_layout[1])
                 .to_vec(),
         );
