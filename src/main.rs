@@ -2,14 +2,13 @@ use crossterm::event::{self, Event};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::Constraint,
     style::{Color, Style, Stylize},
     symbols,
     widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table},
 };
 use std::{
     io::Result,
-    rc::Rc,
     time::{Duration, Instant},
 };
 
@@ -50,6 +49,8 @@ impl TuneIn {
 
         self.dds_config[0].enable_signal();
         self.dds_config[0].freq = 5.;
+        self.dds_config[0].attenu = 1;
+        DdsData::apply_attenuation(&mut self.dds_config[0]);
 
         self.dds_config[1].enable_signal();
         self.dds_config[1].freq = 6000.;
