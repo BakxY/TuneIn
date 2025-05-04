@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Flex, Layout, Rect},
@@ -6,10 +9,8 @@ use ratatui::{
     widgets::{Block, Clear, List},
 };
 use serialport::{self, SerialPort};
-use std::{
-    io::{self, Error},
-    rc::Rc,
-};
+
+use crate::input::{self, Input};
 
 #[derive(Debug)]
 enum ConfigState {
@@ -19,7 +20,11 @@ enum ConfigState {
 
 pub struct ComConfig {
     state: ConfigState,
-    com_port: io::Result<Box<dyn SerialPort>>,
+    com_ports: Vec<serialport::SerialPortInfo>,
+    port_index: usize,
+    active_com_port: Option<Box<dyn SerialPort>>,
+    baud: u32,
+    input: Input,
 }
 
 impl ComConfig {
@@ -27,14 +32,56 @@ impl ComConfig {
     pub fn new() -> Self {
         Self {
             state: ConfigState::PortSelection,
-            com_port: Err(Error::new(io::ErrorKind::Other, "No Comport is connected")),
+            com_ports: Vec::new(),
+            port_index: 0,
+            active_com_port: None,
+            baud: 0,
+            input: Input::new(),
         }
+    }
+
+    //Looks for Com ports
+    //udev rule
+    //KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0666"
+    pub fn scan_serialports(&mut self) {
+        self.com_ports = serialport::available_ports().expect("Error reading Com ports");
+    }
+
+    pub fn key_event(&mut self, key: KeyEvent) {
+        match self.state {
+            ConfigState::PortSelection => match key.code {
+                KeyCode::Char('q') => {}
+                KeyCode::Enter => {
+                    // Todo Error handling
+                    self.port_index = self.input.submit_message().parse().unwrap_or(0);
+                    self.state = ConfigState::BaudSelection;
+                }
+                _ => self.input.key_event(key),
+            },
+            ConfigState::BaudSelection => match key.code {
+                KeyCode::Char('q') => {}
+                KeyCode::Enter => {
+                    // Todo Error handling
+                    self.baud = self.input.submit_message().parse().unwrap_or(0);
+                    self.active_com_port = Some(
+                        serialport::new(
+                            self.com_ports[self.port_index].port_name.clone(),
+                            self.baud,
+                        )
+                        .timeout(Duration::from_millis(10))
+                        .open()
+                        .expect("Failed to open port"),
+                    );
+                    self.state = ConfigState::BaudSelection;
+                }
+                _ => self.input.key_event(key),
+            },
+        };
     }
     //Render a popup form Com settings
     pub fn show_com_popup(&self, frame: &mut Frame) {
-        let ports = serialport::available_ports().expect("no divices found");
         let list = List::new(
-            ports
+            self.com_ports
                 .iter()
                 .enumerate()
                 .map(|(n, port)| Text::from(n.to_string() + ": " + &port.port_name.clone()))
@@ -54,7 +101,7 @@ impl ComConfig {
             .split(area);
         frame.render_widget(Clear, area); //this clears out the background
         frame.render_widget(list, vertical_layout[0]);
-        // frame.render_widget(list, vertical_layout[1]);
+        frame.render_widget(self.input.get_input(), vertical_layout[1]);
     }
 }
 
@@ -67,8 +114,6 @@ fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     area
 }
 
-//udev rule
-//KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0666"
 // fn serial_connect() -> io::Result<Box<dyn SerialPort>> {
 //     let ports = serialport::available_ports().expect("no divices found");
 //     for _ in 0..42 {
