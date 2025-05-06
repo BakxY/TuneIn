@@ -59,7 +59,7 @@ impl TuneIn {
     fn on_tick(&mut self) {}
 
     fn draw(&self, frame: &mut Frame) {
-        let (general_layout, midi_layout) = layout_utils::generate_main_layout(frame);
+        let (general_layout, fft_layout, channel_layout) = layout_utils::generate_main_layout(frame);
 
         frame.render_widget(
             Block::new()
@@ -116,9 +116,9 @@ impl TuneIn {
                     .labels(["0", "10"])
             );
 
-        frame.render_widget(chart, midi_layout[0]);
+        frame.render_widget(chart, fft_layout);
 
-        /*for i in 0..midi_layout.len() {
+        for i in 0..channel_layout.len() {
             let root_block = Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
@@ -126,24 +126,9 @@ impl TuneIn {
                 .style(Style::default())
                 .title("DDS ".to_string() + &(i + 1).to_string());
 
-            frame.render_widget(root_block.clone(), midi_layout[i]);
+            frame.render_widget(root_block.clone(), channel_layout[i]);
 
-            let split_layout = layout_utils::split_midi_layout(midi_layout[i]);
-
-            let dataset = Dataset::default()
-                .marker(symbols::Marker::Braille)
-                .style(Style::new().fg(Color::Red))
-                .graph_type(GraphType::Line)
-                .data(&self.dds_config[i].signal_data);
-
-            let chart = Chart::new(vec![dataset.clone()])
-                .block(Block::new().borders(Borders::ALL))
-                .x_axis(Axis::default().bounds([0.0, 100.0]))
-                .y_axis(Axis::default().bounds([-5.0, 5.0]));
-
-            frame.render_widget(chart, split_layout[0]);
-
-            let freq_str = &format!("{:.2} Hz", self.dds_config[i].freq);
+            /*let freq_str = &format!("{:.2} Hz", self.dds_config[i].freq);
             let attenu_str = &format!("{:.2}", self.dds_config[i].attenu);
 
             let rows = [
@@ -158,7 +143,7 @@ impl TuneIn {
                 .style(Style::new().white())
                 .block(Block::new());
 
-            frame.render_widget(table.clone(), split_layout[1]);
-        }*/
+            frame.render_widget(table.clone(), split_layout[1]);*/
+        }
     }
 }
