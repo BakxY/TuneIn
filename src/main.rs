@@ -2,10 +2,9 @@ use crossterm::event::{self, Event};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
-    layout::Constraint,
-    style::{Color, Style, Stylize},
+    style::{Color, Style},
     symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table},
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType},
 };
 use std::{
     io::Result,
@@ -23,37 +22,25 @@ fn main() -> Result<()> {
 }
 
 struct TuneIn {
-    dds_config: [dds_data::DdsData; 10],
+    dds_config: dds_data::DdsData,
 }
 
 impl TuneIn {
     fn new() -> Self {
         Self {
-            dds_config: [DdsData::new(); 10],
+            dds_config: DdsData::new(),
         }
-    }
-
-    fn cycle_sin_data(dds: &mut dds_data::DdsData) {
-        let cycled_item = dds.signal_data[0].1;
-
-        for i in 0..dds.signal_data.len() - 1 {
-            dds.signal_data[i].1 = dds.signal_data[i + 1].1;
-        }
-
-        dds.signal_data[dds.signal_data.len() - 1].1 = cycled_item;
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
-        self.dds_config[0].enable_signal();
-        self.dds_config[0].freq = 5.;
-        self.dds_config[0].attenu = 1;
-        DdsData::apply_attenuation(&mut self.dds_config[0]);
-
-        self.dds_config[1].enable_signal();
-        self.dds_config[1].freq = 6000.;
+        self.dds_config.add_signal(5., 1.);
+        self.dds_config.add_signal(1500., 3.);
+        self.dds_config.add_signal(3000., 0.);
+        self.dds_config.add_signal(4500., 2.);
+        self.dds_config.add_signal(6000., 1.);
 
         loop {
             let _ = terminal.draw(|frame| self.draw(frame));
@@ -69,18 +56,7 @@ impl TuneIn {
         }
     }
 
-    fn on_tick(&mut self) {
-        for i in 0..self.dds_config.len() - 1 {
-            if self.dds_config[i].on
-                && self.dds_config[i].last_cycle
-                    + dds_data::convert_freq_to_tick_delay(self.dds_config[i].freq)
-                    < Instant::now()
-            {
-                self.dds_config[i].last_cycle = Instant::now();
-                Self::cycle_sin_data(&mut self.dds_config[i]);
-            }
-        }
-    }
+    fn on_tick(&mut self) {}
 
     fn draw(&self, frame: &mut Frame) {
         let (general_layout, midi_layout) = layout_utils::generate_main_layout(frame);
@@ -113,7 +89,36 @@ impl TuneIn {
             general_layout[2],
         );
 
-        for i in 0..midi_layout.len() {
+        let dds_dataset = Dataset::default()
+            .marker(symbols::Marker::Braille)
+            .style(Style::new().fg(Color::Blue))
+            .graph_type(GraphType::Bar)
+            .data(&self.dds_config.signal_data);
+
+        let chart = Chart::new(vec![dds_dataset.clone()])
+            .block(
+                Block::new()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Thick)
+            )
+            .x_axis(
+                Axis::default()
+                    .title("Frequency")
+                    .style(Style::default().fg(Color::White))
+                    .bounds([0., 6000.])
+                    .labels(["0", "3000", "6000"]),
+            )
+            .y_axis(
+                Axis::default()
+                    .title("Strength")
+                    .style(Style::default().fg(Color::White))
+                    .bounds([0., 10.])
+                    .labels(["0", "10"])
+            );
+
+        frame.render_widget(chart, midi_layout[0]);
+
+        /*for i in 0..midi_layout.len() {
             let root_block = Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
@@ -154,6 +159,6 @@ impl TuneIn {
                 .block(Block::new());
 
             frame.render_widget(table.clone(), split_layout[1]);
-        }
+        }*/
     }
 }

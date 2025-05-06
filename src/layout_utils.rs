@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
 };
 
-pub fn generate_main_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
+pub fn generate_main_layout(frame: &mut Frame) -> (Rc<[Rect]>, Rc<[Rect]>) {
     let vertical_temp_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
@@ -20,28 +20,10 @@ pub fn generate_main_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
         ])
         .split(vertical_temp_layout[0]);
 
-    let midi_temp_layout = Layout::default()
+    let midi_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+        .constraints(vec![Constraint::Percentage(66), Constraint::Percentage(34)])
         .split(vertical_temp_layout[1]);
-
-    let mut midi_layout: Vec<Rect> = Vec::new();
-
-    midi_layout.append(
-        &mut Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(20); 5])
-            .split(midi_temp_layout[0])
-            .to_vec(),
-    );
-
-    midi_layout.append(
-        &mut Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(20); 5])
-            .split(midi_temp_layout[1])
-            .to_vec(),
-    );
 
     return (general_layout, midi_layout);
 }
