@@ -1,10 +1,7 @@
 use crossterm::event::{self, Event};
 use dds_data::DdsData;
 use ratatui::{
-    DefaultTerminal, Frame,
-    style::{Color, Style},
-    symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType},
+    style::{Color, Style}, symbols, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding}, DefaultTerminal, Frame
 };
 use std::{
     io::Result,
@@ -65,7 +62,7 @@ impl TuneIn {
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Info"),
             general_layout[0],
@@ -74,7 +71,7 @@ impl TuneIn {
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Options"),
             general_layout[1],
@@ -83,7 +80,7 @@ impl TuneIn {
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Communication"),
             general_layout[2],
@@ -100,6 +97,8 @@ impl TuneIn {
                 Block::new()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Thick)
+                    .title("FFT")
+                    .padding(Padding::new(1, 4, 1, 1))
             )
             .x_axis(
                 Axis::default()
@@ -124,7 +123,7 @@ impl TuneIn {
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::White))
                 .style(Style::default())
-                .title("DDS ".to_string() + &(i + 1).to_string());
+                .title("Channel ".to_string() + &(i + 1).to_string());
 
             frame.render_widget(root_block.clone(), channel_layout[i]);
 
