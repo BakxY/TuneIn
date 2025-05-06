@@ -47,14 +47,3 @@ pub fn generate_main_layout(frame: &mut Frame) -> (Vec<Rect>, Rect, Vec<Rect>) {
 
     return (general_layout, main_layout[0], channel_layout);
 }
-
-pub fn split_midi_layout(layout: Rect) -> Vec<Rect> {
-    let split_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .margin(2)
-        .split(layout)
-        .to_vec();
-
-    return split_layout;
-}
