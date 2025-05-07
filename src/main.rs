@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     result
 }
 
-enum AppState {
+pub enum AppState {
     Running = 0,
     ComConfig = 1,
 }
@@ -54,7 +54,7 @@ impl TuneIn {
         self.dds_config.add_signal(4500., 2.);
         self.dds_config.add_signal(6000., 1.);
 
-        loop {            
+        loop {
             match self.state {
                 AppState::Running => {
                     let _ = terminal.draw(|frame| self.draw_running(frame));
