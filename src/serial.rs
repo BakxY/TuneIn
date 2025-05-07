@@ -54,6 +54,7 @@ impl ComConfig {
         match self.config_state {
             ConfigState::PortSelection => match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => app_state = AppState::Running,
+                KeyCode::Tab => self.toggle_state(),
                 KeyCode::Enter => match self.list_state.selected() {
                     Some(i) => {
                         self.port_index = i;
@@ -63,9 +64,11 @@ impl ComConfig {
                 },
                 KeyCode::Char('j') | KeyCode::Down => self.select_next(),
                 KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                KeyCode::Char('r') => self.scan_serialports(),
                 _ => {}
             },
             ConfigState::BaudSelection => match key.code {
+                KeyCode::Tab => self.toggle_state(),
                 KeyCode::Enter => {
                     // Todo Error handling
                     match self.input.submit_message().parse() {
@@ -103,6 +106,12 @@ impl ComConfig {
     }
     fn select_previous(&mut self) {
         self.list_state.select_previous();
+    }
+    fn toggle_state(&mut self){
+        match self.config_state {
+            ConfigState::PortSelection => self.config_state = ConfigState::BaudSelection,
+            ConfigState::BaudSelection => self.config_state = ConfigState::PortSelection,
+        }
     }
 
     //Render a popup form Com settings

@@ -24,6 +24,7 @@ fn main() -> Result<()> {
     result
 }
 
+#[derive(PartialEq, Eq)]
 pub enum AppState {
     Running = 0,
     ComConfig = 1,
@@ -54,6 +55,8 @@ impl TuneIn {
         self.dds_config.add_signal(4500., 2.);
         self.dds_config.add_signal(6000., 1.);
 
+        self.com_config.scan_serialports();
+
         loop {
             let _ = terminal.draw(|frame| self.draw_running(frame));
 
@@ -62,7 +65,10 @@ impl TuneIn {
                     match self.state {
                         AppState::Running => match key.code {
                             KeyCode::Char('q') => break Ok(()),
-                            KeyCode::Char('p') => self.state = AppState::ComConfig,
+                            KeyCode::Char('p') => {
+                                self.state = AppState::ComConfig;
+                                self.com_config.scan_serialports();
+                            }
                             _ => {}
                         },
 
@@ -169,10 +175,12 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), split_layout[1]);*/
         }
+        if self.state == AppState::ComConfig{
+            self.com_config.show_com_popup(frame);
+        }
     }
 
     fn draw_com_config(&mut self, frame: &mut Frame) {
-        self.com_config.scan_serialports();
         self.com_config.show_com_popup(frame);
     }
 }
