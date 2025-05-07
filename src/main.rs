@@ -1,7 +1,10 @@
 use crossterm::event::{self, Event, KeyCode};
 use dds_data::DdsData;
 use ratatui::{
-    style::{Color, Style}, symbols, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding}, DefaultTerminal, Frame
+    DefaultTerminal, Frame,
+    style::{Color, Style},
+    symbols,
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding},
 };
 use serial::ComConfig;
 use std::{
@@ -9,10 +12,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-mod input;
-mod serial;
 mod dds_data;
+mod input;
 mod layout_utils;
+mod serial;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -21,7 +24,13 @@ fn main() -> Result<()> {
     result
 }
 
+enum AppState {
+    Running = 0,
+    ComConfig = 1,
+}
+
 struct TuneIn {
+    state: AppState,
     dds_config: dds_data::DdsData,
     com_config: serial::ComConfig,
 }
@@ -29,6 +38,7 @@ struct TuneIn {
 impl TuneIn {
     fn new() -> Self {
         Self {
+            state: AppState::ComConfig,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
         }
@@ -44,14 +54,21 @@ impl TuneIn {
         self.dds_config.add_signal(4500., 2.);
         self.dds_config.add_signal(6000., 1.);
 
-        loop {
-            let _ = terminal.draw(|frame| self.draw(frame));
+        loop {            
+            match self.state {
+                AppState::Running => {
+                    let _ = terminal.draw(|frame| self.draw_running(frame));
+                },
+                AppState::ComConfig => {
+                    let _ = terminal.draw(|frame| self.draw_com_config(frame));
+                },
+            }
+
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
                     if key.code == KeyCode::Char('q') {
                         break Ok(());
-                    }
-                    else {
+                    } else {
                         self.com_config.key_event(key);
                     }
                 }
@@ -65,8 +82,9 @@ impl TuneIn {
 
     fn on_tick(&mut self) {}
 
-    fn draw(&mut self, frame: &mut Frame) {
-        let (general_layout, fft_layout, channel_layout) = layout_utils::generate_main_layout(frame);
+    fn draw_running(&mut self, frame: &mut Frame) {
+        let (general_layout, fft_layout, channel_layout) =
+            layout_utils::generate_main_layout(frame);
 
         frame.render_widget(
             Block::new()
@@ -108,7 +126,7 @@ impl TuneIn {
                     .borders(Borders::ALL)
                     .border_type(BorderType::Thick)
                     .title("FFT")
-                    .padding(Padding::new(1, 4, 1, 1))
+                    .padding(Padding::new(1, 4, 1, 1)),
             )
             .x_axis(
                 Axis::default()
@@ -122,7 +140,7 @@ impl TuneIn {
                     .title("Strength")
                     .style(Style::default().fg(Color::White))
                     .bounds([0., 10.])
-                    .labels(["0", "10"])
+                    .labels(["0", "10"]),
             );
 
         frame.render_widget(chart, fft_layout);
@@ -154,6 +172,9 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), split_layout[1]);*/
         }
+    }
+
+    fn draw_com_config(&mut self, frame: &mut Frame) {
         self.com_config.scan_serialports();
         self.com_config.show_com_popup(frame);
     }
