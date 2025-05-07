@@ -2,9 +2,10 @@ use crossterm::event::{self, Event, KeyCode};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
-    style::{Color, Style},
+    layout::Constraint,
+    style::{Color, Style, Stylize},
     symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding},
+    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
 };
 use serial::ComConfig;
 use std::{
@@ -38,7 +39,7 @@ struct TuneIn {
 impl TuneIn {
     fn new() -> Self {
         Self {
-            state: AppState::ComConfig,
+            state: AppState::Running,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
         }
@@ -58,10 +59,10 @@ impl TuneIn {
             match self.state {
                 AppState::Running => {
                     let _ = terminal.draw(|frame| self.draw_running(frame));
-                },
+                }
                 AppState::ComConfig => {
                     let _ = terminal.draw(|frame| self.draw_com_config(frame));
-                },
+                }
             }
 
             if event::poll(tick_rate)? {
@@ -146,17 +147,16 @@ impl TuneIn {
         frame.render_widget(chart, fft_layout);
 
         for i in 0..channel_layout.len() {
-            let root_block = Block::new()
-                .border_type(BorderType::Thick)
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
-                .style(Style::default())
-                .title("Channel ".to_string() + &(i + 1).to_string());
+            let mut signal_freq = 0.;
+            let mut signal_attenu = 0.;
 
-            frame.render_widget(root_block.clone(), channel_layout[i]);
+            if i < self.dds_config.signal_data.len() {
+                signal_freq = self.dds_config.signal_data[i].0;
+                signal_attenu = self.dds_config.signal_data[i].1;
+            }
 
-            /*let freq_str = &format!("{:.2} Hz", self.dds_config[i].freq);
-            let attenu_str = &format!("{:.2}", self.dds_config[i].attenu);
+            let freq_str = &format!("{:.2} Hz", signal_freq);
+            let attenu_str = &format!("{:.2}", signal_attenu);
 
             let rows = [
                 Row::new(vec!["Note", "IDFK"]),
@@ -168,9 +168,16 @@ impl TuneIn {
             let table = Table::new(rows, widths)
                 .column_spacing(1)
                 .style(Style::new().white())
-                .block(Block::new());
+                .block(
+                    Block::new()
+                        .border_type(BorderType::Thick)
+                        .borders(Borders::ALL)
+                        .border_style(Style::default().fg(Color::White))
+                        .style(Style::default())
+                        .title("Channel ".to_string() + &(i + 1).to_string()),
+                );
 
-            frame.render_widget(table.clone(), split_layout[1]);*/
+            frame.render_widget(table.clone(), channel_layout[i]);
         }
     }
 
