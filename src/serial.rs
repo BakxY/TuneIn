@@ -1,21 +1,25 @@
-use std::time::Duration;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Constraint, Direction, Flex, Layout, Rect}, style::{Color, Modifier, Style, Stylize}, text::Text, widgets::{Block, Clear, List, ListState}, Frame
+    Frame,
+    layout::{Constraint, Direction, Flex, Layout, Rect},
+    style::{Color, Modifier, Style, Stylize},
+    text::Text,
+    widgets::{Block, Clear, List, ListState},
 };
-use serialport::{self, SerialPort};
+use serialport::{self, SerialPort, SerialPortInfo};
+use std::time::Duration;
 
-use crate::input::{self, Input};
 use crate::AppState;
+use crate::input::Input;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum ConfigState {
     PortSelection,
     BaudSelection,
 }
 
 pub struct ComConfig {
-    state: ConfigState,
+    config_state: ConfigState,
     list_state: ListState,
     com_ports: Vec<serialport::SerialPortInfo>,
     port_index: usize,
@@ -28,7 +32,7 @@ impl ComConfig {
     //Constructor
     pub fn new() -> Self {
         Self {
-            state: ConfigState::PortSelection,
+            config_state: ConfigState::PortSelection,
             list_state: ListState::default(),
             com_ports: Vec::new(),
             port_index: 0,
@@ -47,20 +51,16 @@ impl ComConfig {
 
     pub fn key_event(&mut self, key: KeyEvent) -> AppState {
         let mut app_state: AppState = AppState::ComConfig;
-        match self.state {
+        match self.config_state {
             ConfigState::PortSelection => match key.code {
-                KeyCode::Char('q') | KeyCode::Esc => {app_state = AppState::Running}
-                KeyCode::Enter => {
-                    // Todo Error handling
-                    match self.list_state.selected() {
-                        Some(i) => {
-                            self.port_index = i;
-                            self.state = ConfigState::BaudSelection;
-                        }
-                        None => {}
-
+                KeyCode::Char('q') | KeyCode::Esc => app_state = AppState::Running,
+                KeyCode::Enter => match self.list_state.selected() {
+                    Some(i) => {
+                        self.port_index = i;
+                        self.config_state = ConfigState::BaudSelection;
                     }
-                }
+                    None => {}
+                },
                 KeyCode::Char('j') | KeyCode::Down => self.select_next(),
                 KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
                 _ => {}
@@ -68,18 +68,25 @@ impl ComConfig {
             ConfigState::BaudSelection => match key.code {
                 KeyCode::Enter => {
                     // Todo Error handling
-                    self.baud = self.input.submit_message().parse().unwrap_or(0);
-                    self.active_com_port = Some(
-                        serialport::new(
-                            self.com_ports[self.port_index].port_name.clone(),
-                            self.baud,
-                        )
-                        .timeout(Duration::from_millis(10))
-                        .open()
-                        .expect("Failed to open port"),
-                    );
-                    self.state = ConfigState::BaudSelection;
-                    app_state = AppState::Running;
+                    match self.input.submit_message().parse() {
+                        Ok(b) => {
+                            self.baud = b;
+                            self.active_com_port = Some(
+                                serialport::new(
+                                    self.com_ports[self.port_index].port_name.clone(),
+                                    self.baud,
+                                )
+                                .timeout(Duration::from_millis(10))
+                                .open()
+                                .expect("Failed to open port"),
+                            );
+                            self.config_state = ConfigState::BaudSelection;
+                            app_state = AppState::Running;
+                        }
+                        Err(_) => {
+
+                        }
+                    }
                 }
                 _ => {
                     if self.input.key_event(key) {
@@ -99,30 +106,36 @@ impl ComConfig {
     }
 
     //Render a popup form Com settings
-    pub fn show_com_popup(&self, frame: &mut Frame) {
+    pub fn show_com_popup(&mut self, frame: &mut Frame) {
         let list = List::new(
             self.com_ports
                 .iter()
-                .enumerate()
-                .map(|(n, port)| Text::from(n.to_string() + ": " + &port.port_name.clone()))
+                .map(|port| Text::from(port.port_name.clone()))
                 .collect::<Vec<Text>>(),
         )
         .block(Block::bordered().title("Com Ports"))
         .style(Style::new().white())
         .highlight_style(Style::new().fg(Color::Green).add_modifier(Modifier::BOLD))
-        .highlight_symbol(">>")
+        .highlight_symbol(">> ")
         .highlight_spacing(ratatui::widgets::HighlightSpacing::WhenSelected)
         .repeat_highlight_symbol(false);
 
         let area = popup_area(frame.area(), 60, 40);
 
-        let vertical_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(80), Constraint::Percentage(20)])
-            .split(area);
         frame.render_widget(Clear, area); //this clears out the background
-        frame.render_widget(list, vertical_layout[0]);
-        frame.render_widget(self.input.get_input(), vertical_layout[1]);
+        if self.config_state == ConfigState::PortSelection {
+            frame.render_stateful_widget(list, area, &mut self.list_state);
+        } else {
+            let vertical_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(vec![Constraint::Percentage(80), Constraint::Percentage(20)])
+                .split(area);
+            frame.render_stateful_widget(list, vertical_layout[0], &mut self.list_state);
+            frame.render_widget(
+                self.input.get_input(String::from("Baud")),
+                vertical_layout[1],
+            );
+        }
     }
 }
 

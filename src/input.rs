@@ -2,7 +2,7 @@ use crossterm::event::KeyEvent;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEventKind},
     style::{Color, Style},
-    widgets::{Block, Paragraph},
+    widgets::{block::title, Block, Paragraph},
 };
 
 /// Input holds the state of the user input
@@ -119,12 +119,12 @@ impl Input {
         return should_exit;
     }
 
-    pub fn get_input(&self) -> Paragraph<'_> {
+    pub fn get_input(&self, title: String) -> Paragraph<'_> {
         Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default(),
                 InputMode::Editing => Style::default().fg(Color::Yellow),
             })
-            .block(Block::bordered().title("Input"))
+            .block(Block::bordered().title(title))
     }
 }
