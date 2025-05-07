@@ -1,7 +1,7 @@
 use std::time::Duration;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Constraint, Direction, Flex, Layout, Rect}, style::{Style, Stylize}, text::Text, widgets::{Block, Clear, List, ListState}, Frame
+    layout::{Constraint, Direction, Flex, Layout, Rect}, style::{Color, Modifier, Style, Stylize}, text::Text, widgets::{Block, Clear, List, ListState}, Frame
 };
 use serialport::{self, SerialPort};
 
@@ -109,8 +109,9 @@ impl ComConfig {
         )
         .block(Block::bordered().title("Com Ports"))
         .style(Style::new().white())
-        .highlight_style(Style::new().italic())
+        .highlight_style(Style::new().fg(Color::Green).add_modifier(Modifier::BOLD))
         .highlight_symbol(">>")
+        .highlight_spacing(ratatui::widgets::HighlightSpacing::WhenSelected)
         .repeat_highlight_symbol(false);
 
         let area = popup_area(frame.area(), 60, 40);
