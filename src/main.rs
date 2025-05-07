@@ -1,20 +1,18 @@
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, Keycode};
+use dds_data::DdsData;
 use ratatui::{
-    DefaultTerminal, Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table},
+    style::{Color, Style}, symbols, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding}, DefaultTerminal, Frame
 };
 use serial::ComConfig;
 use std::{
     io::Result,
-    rc::Rc,
     time::{Duration, Instant},
 };
 
 mod input;
 mod serial;
+pub mod dds_data;
+pub mod layout_utils;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -24,90 +22,26 @@ fn main() -> Result<()> {
 }
 
 struct TuneIn {
-    dds_signal_data: [[(f64, f64); 19]; 10],
-}
-
-struct DdsSignal {}
-
-impl DdsSignal {
-    fn get_off_signal() -> [(f64, f64); 19] {
-        return [
-            (0., 0.),
-            (5.2632, 0.),
-            (10.5263, 0.),
-            (15.7895, 0.),
-            (21.0526, 0.),
-            (26.3158, 0.),
-            (31.5789, 0.),
-            (36.8421, 0.),
-            (42.1053, 0.),
-            (47.3684, 0.),
-            (52.6316, 0.),
-            (57.8947, 0.),
-            (63.1579, 0.),
-            (68.4211, 0.),
-            (73.6842, 0.),
-            (78.9474, 0.),
-            (84.2105, 0.),
-            (89.4737, 0.),
-            (100., 0.),
-        ];
-    }
-
-    fn get_sin_signal() -> [(f64, f64); 19] {
-        return [
-            (0., 0.),
-            (5.2632, 1.6235),
-            (10.5263, 3.0711),
-            (15.7895, 4.1858),
-            (21.0526, 4.8470),
-            (26.3158, 4.9829),
-            (31.5789, 4.5789),
-            (36.8421, 3.6786),
-            (42.1053, 2.3797),
-            (47.3684, 0.8230),
-            (52.6316, -0.8230),
-            (57.8947, -2.3797),
-            (63.1579, -3.6786),
-            (68.4211, -4.5789),
-            (73.6842, -4.9829),
-            (78.9474, -4.8470),
-            (84.2105, -4.1858),
-            (89.4737, -3.0711),
-            (94.7368, -1.6235),
-        ];
-    }
+    dds_config: dds_data::DdsData,
 }
 
 impl TuneIn {
     fn new() -> Self {
-        let mut default_data: [[(f64, f64); 19]; 10] = [[(0_f64, 0_f64); 19]; 10];
-
-        for i in 0..10 {
-            default_data[i] = DdsSignal::get_off_signal();
-        }
-
-        default_data[0] = DdsSignal::get_sin_signal();
-
         Self {
-            dds_signal_data: default_data,
+            dds_config: DdsData::new(),
         }
-    }
-
-    fn cycle_sin_data(&mut self, id: usize) {
-        let cycled_item = self.dds_signal_data[id][0].1;
-
-        for i in 0..self.dds_signal_data[id].len() - 1 {
-            self.dds_signal_data[id][i].1 = self.dds_signal_data[id][i + 1].1;
-        }
-
-        self.dds_signal_data[id][self.dds_signal_data[id].len() - 1].1 = cycled_item;
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        let tick_rate = Duration::from_millis(10);
+        let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
         let mut com_config = ComConfig::new();
+
+        self.dds_config.add_signal(5., 1.);
+        self.dds_config.add_signal(1500., 3.);
+        self.dds_config.add_signal(3000., 0.);
+        self.dds_config.add_signal(4500., 2.);
+        self.dds_config.add_signal(6000., 1.);
 
         loop {
             let _ = terminal.draw(|frame| self.draw(frame, &mut com_config));
@@ -128,82 +62,16 @@ impl TuneIn {
         }
     }
 
-    fn on_tick(&mut self) {
-        self.cycle_sin_data(0);
-    }
+    fn on_tick(&mut self) {}
 
-    fn generate_layout(frame: &mut Frame) -> (Rc<[Rect]>, Vec<Rect>) {
-        let vertical_temp_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
-            .split(frame.area());
-
-        let general_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(34),
-            ])
-            .split(vertical_temp_layout[0]);
-
-        let midi_temp_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(vertical_temp_layout[1]);
-
-        let mut midi_layout: Vec<Rect> = Vec::new();
-
-        midi_layout.append(
-            &mut Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(vec![
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                ])
-                .split(midi_temp_layout[0])
-                .to_vec(),
-        );
-
-        midi_layout.append(
-            &mut Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(vec![
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                ])
-                .split(midi_temp_layout[1])
-                .to_vec(),
-        );
-
-        return (general_layout, midi_layout);
-    }
-
-    fn split_midi_layout(layout: Rect) -> Vec<Rect> {
-        let split_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-            .margin(2)
-            .split(layout)
-            .to_vec();
-
-        return split_layout;
-    }
-
-    fn draw(&self, frame: &mut Frame, com_config: &mut ComConfig) {
-        let (general_layout, midi_layout) = TuneIn::generate_layout(frame);
+    fn draw(&self, frame: &mut Frame) {
+        let (general_layout, fft_layout, channel_layout) = layout_utils::generate_main_layout(frame);
 
         frame.render_widget(
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Info"),
             general_layout[0],
@@ -212,7 +80,7 @@ impl TuneIn {
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Options"),
             general_layout[1],
@@ -221,52 +89,69 @@ impl TuneIn {
             Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White))
+                .border_style(Style::default())
                 .style(Style::default())
                 .title("Communication"),
             general_layout[2],
         );
 
-        let rows = [
-            Row::new(vec!["Note", "IDFK"]),
-            Row::new(vec!["Freq", "69 kHz"]),
-            Row::new(vec!["Atten", "2"]),
-        ];
-        // Columns widths are constrained in the same way as Layout...
-        let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
-        let table = Table::new(rows, widths)
-            // ...and they can be separated by a fixed spacing.
-            .column_spacing(1)
-            // You can set the style of the entire Table.
-            .style(Style::new().white())
-            // As any other widget, a Table can be wrapped in a Block.
-            .block(Block::new());
+        let dds_dataset = Dataset::default()
+            .marker(symbols::Marker::Braille)
+            .style(Style::new().fg(Color::Blue))
+            .graph_type(GraphType::Bar)
+            .data(&self.dds_config.signal_data);
 
-        for i in 0..midi_layout.len() {
+        let chart = Chart::new(vec![dds_dataset.clone()])
+            .block(
+                Block::new()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Thick)
+                    .title("FFT")
+                    .padding(Padding::new(1, 4, 1, 1))
+            )
+            .x_axis(
+                Axis::default()
+                    .title("Frequency")
+                    .style(Style::default().fg(Color::White))
+                    .bounds([0., 6000.])
+                    .labels(["0", "3000", "6000"]),
+            )
+            .y_axis(
+                Axis::default()
+                    .title("Strength")
+                    .style(Style::default().fg(Color::White))
+                    .bounds([0., 10.])
+                    .labels(["0", "10"])
+            );
+
+        frame.render_widget(chart, fft_layout);
+
+        for i in 0..channel_layout.len() {
             let root_block = Block::new()
                 .border_type(BorderType::Thick)
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::White))
                 .style(Style::default())
-                .title("DDS ".to_string() + &(i + 1).to_string());
+                .title("Channel ".to_string() + &(i + 1).to_string());
 
-            frame.render_widget(root_block.clone(), midi_layout[i]);
+            frame.render_widget(root_block.clone(), channel_layout[i]);
 
-            let split_layout = TuneIn::split_midi_layout(midi_layout[i]);
+            /*let freq_str = &format!("{:.2} Hz", self.dds_config[i].freq);
+            let attenu_str = &format!("{:.2}", self.dds_config[i].attenu);
 
-            let dataset = Dataset::default()
-                .marker(symbols::Marker::Braille)
-                .style(Style::new().fg(Color::Red))
-                .graph_type(GraphType::Line)
-                .data(&self.dds_signal_data[i]);
+            let rows = [
+                Row::new(vec!["Note", "IDFK"]),
+                Row::new(vec!["Freq", freq_str]),
+                Row::new(vec!["Atten", attenu_str]),
+            ];
 
-            let chart = Chart::new(vec![dataset.clone()])
-                .block(Block::new().borders(Borders::ALL))
-                .x_axis(Axis::default().bounds([0.0, 100.0]))
-                .y_axis(Axis::default().bounds([-5.0, 5.0]));
+            let widths = [Constraint::Percentage(30), Constraint::Percentage(70)];
+            let table = Table::new(rows, widths)
+                .column_spacing(1)
+                .style(Style::new().white())
+                .block(Block::new());
 
-            frame.render_widget(chart, split_layout[0]);
-            frame.render_widget(table.clone(), split_layout[1]);
+            frame.render_widget(table.clone(), split_layout[1]);*/
         }
         com_config.scan_serialports();
         com_config.show_com_popup(frame);
