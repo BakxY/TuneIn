@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, Keycode};
+use crossterm::event::{self, Event, KeyCode};
 use dds_data::DdsData;
 use ratatui::{
     style::{Color, Style}, symbols, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding}, DefaultTerminal, Frame
@@ -11,8 +11,8 @@ use std::{
 
 mod input;
 mod serial;
-pub mod dds_data;
-pub mod layout_utils;
+mod dds_data;
+mod layout_utils;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -23,19 +23,20 @@ fn main() -> Result<()> {
 
 struct TuneIn {
     dds_config: dds_data::DdsData,
+    com_config: serial::ComConfig,
 }
 
 impl TuneIn {
     fn new() -> Self {
         Self {
             dds_config: DdsData::new(),
+            com_config: ComConfig::new(),
         }
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
-        let mut com_config = ComConfig::new();
 
         self.dds_config.add_signal(5., 1.);
         self.dds_config.add_signal(1500., 3.);
@@ -44,14 +45,14 @@ impl TuneIn {
         self.dds_config.add_signal(6000., 1.);
 
         loop {
-            let _ = terminal.draw(|frame| self.draw(frame, &mut com_config));
+            let _ = terminal.draw(|frame| self.draw(frame));
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
                     if key.code == KeyCode::Char('q') {
                         break Ok(());
                     }
                     else {
-                        com_config.key_event(key);
+                        self.com_config.key_event(key);
                     }
                 }
             }
@@ -64,7 +65,7 @@ impl TuneIn {
 
     fn on_tick(&mut self) {}
 
-    fn draw(&self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         let (general_layout, fft_layout, channel_layout) = layout_utils::generate_main_layout(frame);
 
         frame.render_widget(
@@ -153,7 +154,7 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), split_layout[1]);*/
         }
-        com_config.scan_serialports();
-        com_config.show_com_popup(frame);
+        self.com_config.scan_serialports();
+        self.com_config.show_com_popup(frame);
     }
 }
