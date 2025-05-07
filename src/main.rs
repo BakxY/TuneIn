@@ -55,21 +55,18 @@ impl TuneIn {
         self.dds_config.add_signal(6000., 1.);
 
         loop {
-            match self.state {
-                AppState::Running => {
-                    let _ = terminal.draw(|frame| self.draw_running(frame));
-                },
-                AppState::ComConfig => {
-                    let _ = terminal.draw(|frame| self.draw_com_config(frame));
-                },
-            }
+            let _ = terminal.draw(|frame| self.draw_running(frame));
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('q') {
-                        break Ok(());
-                    } else {
-                        self.com_config.key_event(key);
+                    match self.state {
+                        AppState::Running => match key.code {
+                            KeyCode::Char('q') => break Ok(()),
+                            KeyCode::Char('p') => self.state = AppState::ComConfig,
+                            _ => {}
+                        },
+
+                        AppState::ComConfig => self.state = self.com_config.key_event(key),
                     }
                 }
             }

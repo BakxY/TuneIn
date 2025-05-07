@@ -2,7 +2,7 @@ use crossterm::event::KeyEvent;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEventKind},
     style::{Color, Style},
-    widgets::{block::title, Block, Paragraph},
+    widgets::{Block, Paragraph, block::title},
 };
 
 /// Input holds the state of the user input
@@ -17,6 +17,7 @@ pub struct Input {
 
 enum InputMode {
     Normal,
+    Error,
     Editing,
 }
 
@@ -87,6 +88,11 @@ impl Input {
         self.character_index = 0;
     }
 
+    pub fn display_error(&mut self, message: String) {
+        self.input = message;
+        self.input_mode = InputMode::Error;
+    }
+
     pub fn submit_message(&mut self) -> String {
         let tmp_input = self.input.clone();
         self.input.clear();
@@ -104,8 +110,17 @@ impl Input {
                 KeyCode::Char('e') => {
                     self.input_mode = InputMode::Editing;
                 }
+                KeyCode::Backspace => {
+                    self.input.clear();
+                    self.reset_cursor();
+                }
                 _ => {}
             },
+            InputMode::Error => {
+                self.input_mode = InputMode::Editing;
+                self.input.clear();
+                self.reset_cursor();
+            }
             InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
                 KeyCode::Char(to_insert) => self.enter_char(to_insert),
                 KeyCode::Backspace => self.delete_char(),
@@ -123,6 +138,7 @@ impl Input {
         Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default(),
+                InputMode::Error => Style::default().fg(Color::Red),
                 InputMode::Editing => Style::default().fg(Color::Yellow),
             })
             .block(Block::bordered().title(title))

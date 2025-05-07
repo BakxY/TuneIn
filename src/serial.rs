@@ -6,7 +6,7 @@ use ratatui::{
     text::Text,
     widgets::{Block, Clear, List, ListState},
 };
-use serialport::{self, SerialPort, SerialPortInfo};
+use serialport::{self, SerialPort};
 use std::time::Duration;
 
 use crate::AppState;
@@ -83,9 +83,9 @@ impl ComConfig {
                             self.config_state = ConfigState::BaudSelection;
                             app_state = AppState::Running;
                         }
-                        Err(_) => {
-
-                        }
+                        Err(_) => self
+                            .input
+                            .display_error(String::from("Not a valid value")),
                     }
                 }
                 _ => {
