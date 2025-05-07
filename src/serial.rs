@@ -1,16 +1,12 @@
 use std::time::Duration;
-
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
-    style::{Style, Stylize},
-    text::Text,
-    widgets::{Block, Clear, List},
+    layout::{Constraint, Direction, Flex, Layout, Rect}, style::{Style, Stylize}, text::Text, widgets::{Block, Clear, List, ListState}, Frame
 };
 use serialport::{self, SerialPort};
 
 use crate::input::{self, Input};
+use crate::AppState;
 
 #[derive(Debug)]
 enum ConfigState {
@@ -20,6 +16,7 @@ enum ConfigState {
 
 pub struct ComConfig {
     state: ConfigState,
+    list_state: ListState,
     com_ports: Vec<serialport::SerialPortInfo>,
     port_index: usize,
     active_com_port: Option<Box<dyn SerialPort>>,
@@ -32,6 +29,7 @@ impl ComConfig {
     pub fn new() -> Self {
         Self {
             state: ConfigState::PortSelection,
+            list_state: ListState::default(),
             com_ports: Vec::new(),
             port_index: 0,
             active_com_port: None,
@@ -47,19 +45,27 @@ impl ComConfig {
         self.com_ports = serialport::available_ports().expect("Error reading Com ports");
     }
 
-    pub fn key_event(&mut self, key: KeyEvent) {
+    pub fn key_event(&mut self, key: KeyEvent) -> AppState {
+        let mut app_state: AppState = AppState::ComConfig;
         match self.state {
             ConfigState::PortSelection => match key.code {
-                KeyCode::Char('q') => {}
+                KeyCode::Char('q') | KeyCode::Esc => {app_state = AppState::Running}
                 KeyCode::Enter => {
                     // Todo Error handling
-                    self.port_index = self.input.submit_message().parse().unwrap_or(0);
-                    self.state = ConfigState::BaudSelection;
+                    match self.list_state.selected() {
+                        Some(i) => {
+                            self.port_index = i;
+                            self.state = ConfigState::BaudSelection;
+                        }
+                        None => {}
+
+                    }
                 }
-                _ => self.input.key_event(key),
+                KeyCode::Char('j') | KeyCode::Down => self.select_next(),
+                KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                _ => {}
             },
             ConfigState::BaudSelection => match key.code {
-                KeyCode::Char('q') => {}
                 KeyCode::Enter => {
                     // Todo Error handling
                     self.baud = self.input.submit_message().parse().unwrap_or(0);
@@ -73,11 +79,25 @@ impl ComConfig {
                         .expect("Failed to open port"),
                     );
                     self.state = ConfigState::BaudSelection;
+                    app_state = AppState::Running;
                 }
-                _ => self.input.key_event(key),
+                _ => {
+                    if self.input.key_event(key) {
+                        app_state = AppState::Running;
+                    }
+                }
             },
         };
+        return app_state;
     }
+
+    fn select_next(&mut self) {
+        self.list_state.select_next();
+    }
+    fn select_previous(&mut self) {
+        self.list_state.select_previous();
+    }
+
     //Render a popup form Com settings
     pub fn show_com_popup(&self, frame: &mut Frame) {
         let list = List::new(
@@ -91,7 +111,7 @@ impl ComConfig {
         .style(Style::new().white())
         .highlight_style(Style::new().italic())
         .highlight_symbol(">>")
-        .repeat_highlight_symbol(true);
+        .repeat_highlight_symbol(false);
 
         let area = popup_area(frame.area(), 60, 40);
 

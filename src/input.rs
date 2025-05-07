@@ -94,9 +94,13 @@ impl Input {
         return tmp_input;
     }
 
-    pub fn key_event(&mut self, key: KeyEvent) {
+    pub fn key_event(&mut self, key: KeyEvent) -> bool {
+        let mut should_exit = false;
         match self.input_mode {
             InputMode::Normal => match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => {
+                    should_exit = true;
+                }
                 KeyCode::Char('e') => {
                     self.input_mode = InputMode::Editing;
                 }
@@ -112,6 +116,7 @@ impl Input {
             },
             InputMode::Editing => {}
         };
+        return should_exit;
     }
 
     pub fn get_input(&self) -> Paragraph<'_> {
