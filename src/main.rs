@@ -1,13 +1,16 @@
-use crossterm::event::{self, Event};
+use crossterm::event::{self, Event, Keycode};
 use dds_data::DdsData;
 use ratatui::{
     style::{Color, Style}, symbols, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding}, DefaultTerminal, Frame
 };
+use serial::ComConfig;
 use std::{
     io::Result,
     time::{Duration, Instant},
 };
 
+mod input;
+mod serial;
 pub mod dds_data;
 pub mod layout_utils;
 
@@ -32,6 +35,7 @@ impl TuneIn {
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
+        let mut com_config = ComConfig::new();
 
         self.dds_config.add_signal(5., 1.);
         self.dds_config.add_signal(1500., 3.);
@@ -40,10 +44,15 @@ impl TuneIn {
         self.dds_config.add_signal(6000., 1.);
 
         loop {
-            let _ = terminal.draw(|frame| self.draw(frame));
+            let _ = terminal.draw(|frame| self.draw(frame, &mut com_config));
             if event::poll(tick_rate)? {
-                if matches!(event::read()?, Event::Key(_)) {
-                    break Ok(());
+                if let Event::Key(key) = event::read()? {
+                    if key.code == KeyCode::Char('q') {
+                        break Ok(());
+                    }
+                    else {
+                        com_config.key_event(key);
+                    }
                 }
             }
             if last_tick.elapsed() >= tick_rate {
@@ -144,5 +153,7 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), split_layout[1]);*/
         }
+        com_config.scan_serialports();
+        com_config.show_com_popup(frame);
     }
 }
