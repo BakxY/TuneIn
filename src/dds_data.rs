@@ -23,4 +23,13 @@ impl DdsData {
             }
         }
     }
+
+    pub fn toggle_signal(&mut self, freq: f64, attenu: f64) {
+        if self.signal_data.contains(&(freq, attenu)) {
+            self.remove_signal(freq);
+        }
+        else {
+            self.add_signal(freq, attenu);
+        }
+    }
 }

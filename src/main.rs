@@ -64,9 +64,9 @@ impl TuneIn {
                     if key.code == KeyCode::Char('q') {
                         break Ok(());
                     } else if key.code == KeyCode::Char('w') {
-                            self.dds_config.add_signal(6000., 1.);
+                            self.dds_config.toggle_signal(6000., 1.);
                     } else if key.code == KeyCode::Char('e') {
-                            self.dds_config.add_signal(4000., 3.);
+                            self.dds_config.toggle_signal(4000., 3.);
                     } else {
                         self.com_config.key_event(key);
                     }
@@ -153,8 +153,8 @@ impl TuneIn {
                 signal_attenu = self.dds_config.signal_data[i].1;
             }
 
-            let freq_str = &format!("{:.2} Hz", signal_freq);
-            let attenu_str = &format!("{:.2}", signal_attenu);
+            let freq_str = &format!("{:.1} Hz", signal_freq);
+            let attenu_str = &format!("{:.1}", signal_attenu);
 
             let rows = [
                 Row::new(vec!["Note", "IDFK"]),
