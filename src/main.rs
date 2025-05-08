@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState};
+use crossterm::event::{self, Event, KeyCode};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
