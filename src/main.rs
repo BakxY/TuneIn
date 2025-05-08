@@ -9,7 +9,7 @@ use ratatui::{
 };
 use serial::ComConfig;
 use std::{
-    io::{stdin, Result},
+    io::Result,
     time::{Duration, Instant},
 };
 
@@ -146,15 +146,15 @@ impl TuneIn {
 
         for i in 0..channel_layout.len() {
             let mut signal_freq = 0.;
-            let mut signal_attenu = 0.;
+            let mut signal_strength = 0.;
 
             if i < self.dds_config.signal_data.len() {
                 signal_freq = self.dds_config.signal_data[i].0;
-                signal_attenu = self.dds_config.signal_data[i].1;
+                signal_strength = self.dds_config.signal_data[i].1;
             }
 
             let freq_str = &format!("{:.1} Hz", signal_freq);
-            let attenu_str = &format!("{:.1}", signal_attenu);
+            let attenu_str = &format!("{:.1}", 10. - signal_strength );
 
             let rows = [
                 Row::new(vec!["Note", "IDFK"]),
