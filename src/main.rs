@@ -25,6 +25,7 @@ fn main() -> Result<()> {
     result
 }
 
+#[derive(PartialEq, Eq)]
 pub enum AppState {
     Running = 0,
     ComConfig = 1,
@@ -49,26 +50,30 @@ impl TuneIn {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
+        self.com_config.scan_serialports();
+
         loop {
-            match self.state {
-                AppState::Running => {
-                    let _ = terminal.draw(|frame| self.draw_running(frame));
-                }
-                AppState::ComConfig => {
-                    let _ = terminal.draw(|frame| self.draw_com_config(frame));
-                }
-            }
+            let _ = terminal.draw(|frame| self.draw_running(frame));
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('q') {
-                        break Ok(());
-                    } else if key.code == KeyCode::Char('w') {
-                            self.dds_config.toggle_signal(6000., 1.);
-                    } else if key.code == KeyCode::Char('e') {
-                            self.dds_config.toggle_signal(4000., 3.);
-                    } else {
-                        self.com_config.key_event(key);
+                    match self.state {
+                        AppState::Running => match key.code {
+                            KeyCode::Char('q') => break Ok(()),
+                            KeyCode::Char('p') => {
+                                self.state = AppState::ComConfig;
+                                self.com_config.scan_serialports();
+                            }
+                            KeyCode::Char('w') => {
+                                self.dds_config.toggle_signal(6000., 1.);
+                            }
+                            KeyCode::Char('e') => {
+                                self.dds_config.toggle_signal(4000., 3.);
+                            }
+                            _ => {}
+                        },
+
+                        AppState::ComConfig => self.state = self.com_config.key_event(key),
                     }
                 }
             }
@@ -154,7 +159,7 @@ impl TuneIn {
             }
 
             let freq_str = &format!("{:.1} Hz", signal_freq);
-            let attenu_str = &format!("{:.1}", 10. - signal_strength );
+            let attenu_str = &format!("{:.1}", 10. - signal_strength);
 
             let rows = [
                 Row::new(vec!["Note", "IDFK"]),
@@ -177,10 +182,12 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), channel_layout[i]);
         }
+        if self.state == AppState::ComConfig {
+            self.com_config.show_com_popup(frame);
+        }
     }
 
     fn draw_com_config(&mut self, frame: &mut Frame) {
-        self.com_config.scan_serialports();
         self.com_config.show_com_popup(frame);
     }
 }
