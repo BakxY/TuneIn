@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
@@ -9,7 +9,7 @@ use ratatui::{
 };
 use serial::ComConfig;
 use std::{
-    io::Result,
+    io::{stdin, Result},
     time::{Duration, Instant},
 };
 
@@ -49,12 +49,6 @@ impl TuneIn {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
-        self.dds_config.add_signal(5., 1.);
-        self.dds_config.add_signal(1500., 3.);
-        self.dds_config.add_signal(3000., 0.);
-        self.dds_config.add_signal(4500., 2.);
-        self.dds_config.add_signal(6000., 1.);
-
         loop {
             match self.state {
                 AppState::Running => {
@@ -69,6 +63,10 @@ impl TuneIn {
                 if let Event::Key(key) = event::read()? {
                     if key.code == KeyCode::Char('q') {
                         break Ok(());
+                    } else if key.code == KeyCode::Char('w') {
+                            self.dds_config.add_signal(6000., 1.);
+                    } else if key.code == KeyCode::Char('e') {
+                            self.dds_config.add_signal(4000., 3.);
                     } else {
                         self.com_config.key_event(key);
                     }

@@ -10,7 +10,9 @@ impl DdsData {
     }
 
     pub fn add_signal(&mut self, freq: f64, attenu: f64) {
-        self.signal_data.push((freq, 10. / (attenu + 1.)));
+        if self.signal_data.len() < 10 && !self.signal_data.contains(&(freq, attenu)){
+            self.signal_data.push((freq, attenu));
+        }
     }
 
     pub fn remove_signal(&mut self, freq: f64) {
