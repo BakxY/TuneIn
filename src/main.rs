@@ -49,12 +49,6 @@ impl TuneIn {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
-        self.dds_config.add_signal(5., 1.);
-        self.dds_config.add_signal(1500., 3.);
-        self.dds_config.add_signal(3000., 0.);
-        self.dds_config.add_signal(4500., 2.);
-        self.dds_config.add_signal(6000., 1.);
-
         loop {
             match self.state {
                 AppState::Running => {
@@ -69,6 +63,10 @@ impl TuneIn {
                 if let Event::Key(key) = event::read()? {
                     if key.code == KeyCode::Char('q') {
                         break Ok(());
+                    } else if key.code == KeyCode::Char('w') {
+                            self.dds_config.toggle_signal(6000., 1.);
+                    } else if key.code == KeyCode::Char('e') {
+                            self.dds_config.toggle_signal(4000., 3.);
                     } else {
                         self.com_config.key_event(key);
                     }
@@ -148,15 +146,15 @@ impl TuneIn {
 
         for i in 0..channel_layout.len() {
             let mut signal_freq = 0.;
-            let mut signal_attenu = 0.;
+            let mut signal_strength = 0.;
 
             if i < self.dds_config.signal_data.len() {
                 signal_freq = self.dds_config.signal_data[i].0;
-                signal_attenu = self.dds_config.signal_data[i].1;
+                signal_strength = self.dds_config.signal_data[i].1;
             }
 
-            let freq_str = &format!("{:.2} Hz", signal_freq);
-            let attenu_str = &format!("{:.2}", signal_attenu);
+            let freq_str = &format!("{:.1} Hz", signal_freq);
+            let attenu_str = &format!("{:.1}", 10. - signal_strength );
 
             let rows = [
                 Row::new(vec!["Note", "IDFK"]),

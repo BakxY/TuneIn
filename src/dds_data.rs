@@ -10,7 +10,11 @@ impl DdsData {
     }
 
     pub fn add_signal(&mut self, freq: f64, attenu: f64) {
-        self.signal_data.push((freq, 10. / (attenu + 1.)));
+        let signal_strength = 10. - attenu;
+
+        if self.signal_data.len() < 10 && !self.signal_data.contains(&(freq, signal_strength)){
+            self.signal_data.push((freq, signal_strength));
+        }
     }
 
     pub fn remove_signal(&mut self, freq: f64) {
@@ -19,6 +23,17 @@ impl DdsData {
                 self.signal_data.remove(i);
                 return;
             }
+        }
+    }
+
+    pub fn toggle_signal(&mut self, freq: f64, attenu: f64) {
+        let signal_strength = 10. - attenu;
+        
+        if self.signal_data.contains(&(freq, signal_strength)) {
+            self.remove_signal(freq);
+        }
+        else {
+            self.add_signal(freq, attenu);
         }
     }
 }
