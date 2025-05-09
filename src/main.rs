@@ -53,7 +53,7 @@ impl TuneIn {
         self.com_config.scan_serialports();
 
         loop {
-            let _ = terminal.draw(|frame| self.draw_running(frame));
+            let _ = terminal.draw(|frame| self.draw(frame));
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
@@ -86,7 +86,7 @@ impl TuneIn {
 
     fn on_tick(&mut self) {}
 
-    fn draw_running(&mut self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         let (general_layout, fft_layout, channel_layout) =
             layout_utils::generate_main_layout(frame);
 
@@ -182,12 +182,9 @@ impl TuneIn {
 
             frame.render_widget(table.clone(), channel_layout[i]);
         }
+
         if self.state == AppState::ComConfig {
             self.com_config.show_com_popup(frame);
         }
-    }
-
-    fn draw_com_config(&mut self, frame: &mut Frame) {
-        self.com_config.show_com_popup(frame);
     }
 }
