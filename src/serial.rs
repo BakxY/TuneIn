@@ -1,10 +1,10 @@
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
-    style::{Color, Modifier, Style, Stylize},
+    layout::{Constraint, Direction, Flex, Layout, Position, Rect},
+    style::{Color, Modifier, Style},
     text::Text,
-    widgets::{Block, Clear, List, ListState},
+    widgets::{Block, BorderType, Clear, List, ListState},
 };
 use serialport::{self, SerialPort};
 use std::time::Duration;
@@ -86,9 +86,7 @@ impl ComConfig {
                             self.config_state = ConfigState::BaudSelection;
                             app_state = AppState::Running;
                         }
-                        Err(_) => self
-                            .input
-                            .display_error(String::from("Not a valid value")),
+                        Err(_) => self.input.display_error(String::from("Not a valid value")),
                     }
                 }
                 _ => {
@@ -107,7 +105,7 @@ impl ComConfig {
     fn select_previous(&mut self) {
         self.list_state.select_previous();
     }
-    fn toggle_state(&mut self){
+    fn toggle_state(&mut self) {
         match self.config_state {
             ConfigState::PortSelection => self.config_state = ConfigState::BaudSelection,
             ConfigState::BaudSelection => self.config_state = ConfigState::PortSelection,
@@ -122,8 +120,12 @@ impl ComConfig {
                 .map(|port| Text::from(port.port_name.clone()))
                 .collect::<Vec<Text>>(),
         )
-        .block(Block::bordered().title("Com Ports"))
-        .style(Style::new().white())
+        .block(
+            Block::bordered()
+                .title("Com Ports")
+                .border_type(BorderType::Thick),
+        )
+        .style(Style::default())
         .highlight_style(Style::new().fg(Color::Green).add_modifier(Modifier::BOLD))
         .highlight_symbol(">> ")
         .highlight_spacing(ratatui::widgets::HighlightSpacing::WhenSelected)
@@ -132,18 +134,23 @@ impl ComConfig {
         let area = popup_area(frame.area(), 60, 40);
 
         frame.render_widget(Clear, area); //this clears out the background
-        if self.config_state == ConfigState::PortSelection {
-            frame.render_stateful_widget(list, area, &mut self.list_state);
-        } else {
-            let vertical_layout = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(vec![Constraint::Percentage(80), Constraint::Percentage(20)])
-                .split(area);
-            frame.render_stateful_widget(list, vertical_layout[0], &mut self.list_state);
-            frame.render_widget(
-                self.input.get_input(String::from("Baud")),
-                vertical_layout[1],
-            );
+        let vertical_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
+            .split(area);
+        frame.render_stateful_widget(&list, vertical_layout[0], &mut self.list_state);
+        frame.render_widget(
+            self.input.get_input(String::from("Baud")),
+            vertical_layout[1],
+        );
+        if self.config_state == ConfigState::BaudSelection {
+            frame.set_cursor_position(Position::new(
+                // Draw the cursor at the current position in the input field.
+                // This position is can be controlled via the left and right arrow key
+                area.x + self.input.get_index() + 1,
+                // Move one line down, from the border to the input line
+                area.y + area.height - 2,
+            ));
         }
     }
 }

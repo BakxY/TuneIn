@@ -2,7 +2,7 @@ use crossterm::event::KeyEvent;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEventKind},
     style::{Color, Style},
-    widgets::{Block, Paragraph, block::title},
+    widgets::{Block, BorderType, Paragraph},
 };
 
 /// Input holds the state of the user input
@@ -141,6 +141,10 @@ impl Input {
                 InputMode::Error => Style::default().fg(Color::Red),
                 InputMode::Editing => Style::default().fg(Color::Yellow),
             })
-            .block(Block::bordered().title(title))
+            .block(Block::bordered().title(title).border_type(BorderType::Thick))
+    }
+
+    pub fn get_index(&self) -> u16 {
+        self.character_index.try_into().unwrap()
     }
 }
