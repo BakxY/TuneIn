@@ -141,7 +141,7 @@ impl ComConfig {
         frame.render_widget(Clear, area); //this clears out the background
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
+            .constraints(vec![Constraint::Fill(1), Constraint::Length(3)])
             .split(area);
         frame.render_stateful_widget(&list, vertical_layout[0], &mut self.list_state);
         frame.render_widget(
