@@ -58,6 +58,10 @@ impl TuneIn {
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
+                    if key.code == KeyCode::Char('c') && key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) {
+                        return Ok(());
+                    }
+
                     match self.state {
                         AppState::Running => match key.code {
                             KeyCode::Char('q') => break Ok(()),
