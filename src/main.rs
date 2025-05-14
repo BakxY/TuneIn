@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
@@ -16,8 +16,8 @@ use std::{
 mod dds_data;
 mod input;
 mod layout_utils;
-mod serial;
 mod render_utils;
+mod serial;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -51,6 +51,9 @@ impl TuneIn {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
 
+        let mut current_attenu = 0.;
+        let mut current_octave = 0;
+
         self.com_config.scan_serialports();
 
         loop {
@@ -58,7 +61,9 @@ impl TuneIn {
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('c') && key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) {
+                    if key.code == KeyCode::Char('c')
+                        && key.modifiers.contains(KeyModifiers::CONTROL)
+                    {
                         return Ok(());
                     }
 
@@ -69,11 +74,78 @@ impl TuneIn {
                                 self.state = AppState::ComConfig;
                                 self.com_config.scan_serialports();
                             }
-                            KeyCode::Char('w') => {
-                                self.dds_config.toggle_signal(6000., 1.);
+                            KeyCode::Char('s') => {
+                                self.dds_config.toggle_signal(
+                                    261.63 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
                             }
-                            KeyCode::Char('e') => {
-                                self.dds_config.toggle_signal(4000., 3.);
+                            KeyCode::Char('d') => {
+                                self.dds_config.toggle_signal(
+                                    293.66 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('f') => {
+                                self.dds_config.toggle_signal(
+                                    329.63 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('g') => {
+                                self.dds_config.toggle_signal(
+                                    349.23 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('h') => {
+                                self.dds_config.toggle_signal(
+                                    392.00 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('j') => {
+                                self.dds_config.toggle_signal(
+                                    440.00 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('k') => {
+                                self.dds_config.toggle_signal(
+                                    493.88 * f64::powi(2., current_octave),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('l') => {
+                                self.dds_config.toggle_signal(
+                                    261.63 * f64::powi(2., current_octave + 1),
+                                    current_attenu,
+                                );
+                            }
+                            KeyCode::Char('v') => {
+                                if current_attenu < 10. {
+                                    current_attenu -= 1.;
+                                }
+                            }
+                            KeyCode::Char('V') => {
+                                if current_attenu > 0. {
+                                    current_attenu += 1.;
+                                }
+                            }
+                            KeyCode::Char('n') => {
+                                if current_octave < 4 {
+                                    current_octave -= 1;
+                                }
+                            }
+                            KeyCode::Char('N') => {
+                                if current_octave > -6 {
+                                    current_octave += 1;
+                                }
+                            }
+                            KeyCode::Char('c') => {
+                                for tone in self.dds_config.signal_data.clone() {
+                                    self.dds_config.remove_signal(tone.0);
+                                }
                             }
                             _ => {}
                         },
