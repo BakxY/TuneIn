@@ -2,10 +2,6 @@ use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use dds_data::DdsData;
 use ratatui::{
     DefaultTerminal, Frame,
-    layout::Constraint,
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
 };
 use serial::ComConfig;
 use std::{
