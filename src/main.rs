@@ -36,6 +36,8 @@ struct TuneIn {
     state: AppState,
     dds_config: dds_data::DdsData,
     com_config: serial::ComConfig,
+    current_attenu: f64,
+    current_octave: i32,
 }
 
 impl TuneIn {
@@ -44,15 +46,14 @@ impl TuneIn {
             state: AppState::Running,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
+            current_attenu: 0.,
+            current_octave: 0,
         }
     }
 
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let tick_rate = Duration::from_millis(1);
         let mut last_tick = Instant::now();
-
-        let mut current_attenu = 0.;
-        let mut current_octave = 0;
 
         self.com_config.scan_serialports();
 
@@ -76,70 +77,70 @@ impl TuneIn {
                             }
                             KeyCode::Char('s') => {
                                 self.dds_config.toggle_signal(
-                                    261.63 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    261.63 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('d') => {
                                 self.dds_config.toggle_signal(
-                                    293.66 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    293.66 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('f') => {
                                 self.dds_config.toggle_signal(
-                                    329.63 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    329.63 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('g') => {
                                 self.dds_config.toggle_signal(
-                                    349.23 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    349.23 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('h') => {
                                 self.dds_config.toggle_signal(
-                                    392.00 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    392.00 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('j') => {
                                 self.dds_config.toggle_signal(
-                                    440.00 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    440.00 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('k') => {
                                 self.dds_config.toggle_signal(
-                                    493.88 * f64::powi(2., current_octave),
-                                    current_attenu,
+                                    493.88 * f64::powi(2., self.current_octave),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('l') => {
                                 self.dds_config.toggle_signal(
-                                    261.63 * f64::powi(2., current_octave + 1),
-                                    current_attenu,
+                                    261.63 * f64::powi(2., self.current_octave + 1),
+                                    self.current_attenu,
                                 );
                             }
                             KeyCode::Char('v') => {
-                                if current_attenu < 10. {
-                                    current_attenu -= 1.;
+                                if self.current_attenu > 0. {
+                                    self.current_attenu -= 1.;
                                 }
                             }
                             KeyCode::Char('V') => {
-                                if current_attenu > 0. {
-                                    current_attenu += 1.;
+                                if self.current_attenu < 10. {
+                                    self.current_attenu += 1.;
                                 }
                             }
                             KeyCode::Char('n') => {
-                                if current_octave < 4 {
-                                    current_octave -= 1;
+                                if self.current_octave > -6 {
+                                    self.current_octave -= 1;
                                 }
                             }
                             KeyCode::Char('N') => {
-                                if current_octave > -6 {
-                                    current_octave += 1;
+                                if self.current_octave < 4 {
+                                    self.current_octave += 1;
                                 }
                             }
                             KeyCode::Char('c') => {
@@ -167,7 +168,7 @@ impl TuneIn {
         let (general_layout, fft_layout, channel_layout) =
             layout_utils::generate_main_layout(frame);
 
-        render_utils::render_general(frame, general_layout);
+        render_utils::render_general(frame, general_layout, self.current_attenu, self.current_octave);
         render_utils::render_dds(frame, fft_layout, &self.dds_config.signal_data);
         render_utils::render_channels(frame, channel_layout, &self.dds_config.signal_data);
 

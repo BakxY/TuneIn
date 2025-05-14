@@ -12,9 +12,8 @@ pub fn generate_main_layout(frame: &mut Frame) -> (Vec<Rect>, Rect, Vec<Rect>) {
     let general_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
-            Constraint::Percentage(33),
-            Constraint::Percentage(33),
-            Constraint::Percentage(34),
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
         ])
         .split(vertical_temp_layout[0])
         .to_vec();

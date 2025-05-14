@@ -6,25 +6,40 @@ use ratatui::{
     widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
 };
 
-pub fn render_general(frame: &mut Frame, layout: Vec<Rect>) {
-    frame.render_widget(
-        Block::new()
+pub fn render_general(
+    frame: &mut Frame,
+    layout: Vec<Rect>,
+    current_attenu: f64,
+    current_octave: i32,
+) {
+    // Convert numerical values to string
+    let attenu_str = &format!("{}", current_attenu);
+    let octave_str = &format!("{}", current_octave);
+
+    // Create data rows
+    let rows = [
+        Row::new(vec!["Current attenu", attenu_str]),
+        Row::new(vec!["Current octave", octave_str]),
+    ];
+
+    // Define how wide cells of table are
+    let widths = [Constraint::Percentage(50), Constraint::Percentage(50)];
+
+    // Create table and the block surrounding it
+    let table = Table::new(rows, widths)
+        .column_spacing(1)
+        .style(Style::new().white())
+        .block(
+            Block::new()
             .border_type(BorderType::Thick)
             .borders(Borders::ALL)
             .border_style(Style::default())
             .style(Style::default())
             .title("Info"),
-        layout[0],
-    );
-    frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default())
-            .style(Style::default())
-            .title("Options"),
-        layout[1],
-    );
+        );
+
+    frame.render_widget(table.clone(), layout[0]);
+
     frame.render_widget(
         Block::new()
             .border_type(BorderType::Thick)
@@ -32,7 +47,7 @@ pub fn render_general(frame: &mut Frame, layout: Vec<Rect>) {
             .border_style(Style::default())
             .style(Style::default())
             .title("Communication"),
-        layout[2],
+        layout[1],
     );
 }
 
@@ -86,7 +101,7 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
         // Convert numerical values to string
         let freq_str = &format!("{:.1} Hz", signal_freq);
         let attenu_str = &format!("{:.1}", 10. - signal_strength);
-        
+
         // Create data rows
         let rows = [
             Row::new(vec!["Note", "IDFK"]),
