@@ -31,11 +31,11 @@ pub fn render_general(
         .style(Style::new().white())
         .block(
             Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default())
-            .style(Style::default())
-            .title("Info"),
+                .border_type(BorderType::Thick)
+                .borders(Borders::ALL)
+                .border_style(Style::default())
+                .style(Style::default())
+                .title("Info"),
         );
 
     frame.render_widget(table.clone(), layout[0]);
@@ -104,7 +104,6 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
 
         // Create data rows
         let rows = [
-            Row::new(vec!["Note", "IDFK"]),
             Row::new(vec!["Freq", freq_str]),
             Row::new(vec!["Atten", attenu_str]),
         ];
@@ -122,7 +121,13 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::White))
                     .style(Style::default())
-                    .title("Channel ".to_string() + &(i + 1).to_string()),
+                    .title("Channel ".to_string() + &(i + 1).to_string())
+                    .padding(Padding {
+                        left: 1,
+                        right: 1,
+                        top: 0,
+                        bottom: 0,
+                    }),
             );
 
         frame.render_widget(table.clone(), layout[i]);
