@@ -14,6 +14,7 @@ mod input;
 mod layout_utils;
 mod render_utils;
 mod serial;
+mod midi_utils;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -73,48 +74,56 @@ impl TuneIn {
                             }
                             KeyCode::Char('s') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     261.63 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('d') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     293.66 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('f') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     329.63 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('g') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     349.23 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('h') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     392.00 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('j') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     440.00 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('k') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     493.88 * f64::powi(2., self.current_octave),
                                     self.current_attenu,
                                 );
                             }
                             KeyCode::Char('l') => {
                                 self.dds_config.toggle_signal(
+                                    &mut self.com_config,
                                     261.63 * f64::powi(2., self.current_octave + 1),
                                     self.current_attenu,
                                 );
@@ -141,7 +150,7 @@ impl TuneIn {
                             }
                             KeyCode::Char('c') => {
                                 for tone in self.dds_config.signal_data.clone() {
-                                    self.dds_config.remove_signal(tone.0);
+                                    self.dds_config.remove_signal(&mut self.com_config, tone.0);
                                 }
                             }
                             _ => {}
