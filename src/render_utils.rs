@@ -18,8 +18,8 @@ pub fn render_general(
 
     // Create data rows
     let rows = [
-        Row::new(vec!["Current attenu", attenu_str]),
-        Row::new(vec!["Current octave", octave_str]),
+        Row::new(vec!["Sel. Attenu", attenu_str]),
+        Row::new(vec!["Sel. Octave", octave_str]),
     ];
 
     // Define how wide cells of table are
@@ -35,7 +35,13 @@ pub fn render_general(
                 .borders(Borders::ALL)
                 .border_style(Style::default())
                 .style(Style::default())
-                .title("Info"),
+                .title("Info")
+                .padding(Padding {
+                    left: 1,
+                    right: 1,
+                    top: 0,
+                    bottom: 0,
+                }),
         );
 
     frame.render_widget(table.clone(), layout[0]);
