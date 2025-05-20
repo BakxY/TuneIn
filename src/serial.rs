@@ -49,6 +49,11 @@ impl ComConfig {
         self.com_ports = serialport::available_ports().expect("Error reading Com ports");
     }
 
+    pub fn send_midi(&mut self, status: u8, note: u8, vel: u8) {
+        // Todo no Com
+        self.active_com_port.as_mut().unwrap().write(&[status, note, vel]).expect("Send failed");
+    }
+
     pub fn key_event(&mut self, key: KeyEvent) -> AppState {
         let mut app_state: AppState = AppState::ComConfig;
         match self.config_state {
@@ -136,7 +141,7 @@ impl ComConfig {
         frame.render_widget(Clear, area); //this clears out the background
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
+            .constraints(vec![Constraint::Fill(1), Constraint::Length(3)])
             .split(area);
         frame.render_stateful_widget(&list, vertical_layout[0], &mut self.list_state);
         frame.render_widget(
