@@ -40,7 +40,7 @@ struct TuneIn {
 impl TuneIn {
     fn new() -> Self {
         Self {
-            state: AppState::Running,
+            state: AppState::ComConfig,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
             current_attenu: 255.,
