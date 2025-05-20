@@ -90,8 +90,9 @@ impl TuneIn {
     fn draw(&mut self, frame: &mut Frame) {
         let (general_layout, fft_layout, channel_layout) =
             layout_utils::generate_main_layout(frame);
+        let serial_table = self.com_config.get_table();
 
-        render_utils::render_general(frame, general_layout);
+        render_utils::render_general(frame, general_layout, serial_table);
         render_utils::render_dds(frame, fft_layout, &self.dds_config.signal_data);
         render_utils::render_channels(frame, channel_layout, &self.dds_config.signal_data);
 

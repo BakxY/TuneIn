@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
 };
 
-pub fn render_general(frame: &mut Frame, layout: Vec<Rect>) {
+pub fn render_general(frame: &mut Frame, layout: Vec<Rect>, table: Table) {
     frame.render_widget(
         Block::new()
             .border_type(BorderType::Thick)
@@ -26,12 +26,7 @@ pub fn render_general(frame: &mut Frame, layout: Vec<Rect>) {
         layout[1],
     );
     frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default())
-            .style(Style::default())
-            .title("Communication"),
+        table,
         layout[2],
     );
 }
@@ -86,7 +81,7 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
         // Convert numerical values to string
         let freq_str = &format!("{:.1} Hz", signal_freq);
         let attenu_str = &format!("{:.1}", 10. - signal_strength);
-        
+
         // Create data rows
         let rows = [
             Row::new(vec!["Note", "IDFK"]),
