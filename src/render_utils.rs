@@ -9,16 +9,16 @@ use ratatui::{
 pub fn render_general(
     frame: &mut Frame,
     layout: Vec<Rect>,
-    current_attenu: f64,
+    current_strength: f64,
     current_octave: i32,
 ) {
     // Convert numerical values to string
-    let attenu_str = &format!("{}", current_attenu);
+    let strength_str = &format!("{}", current_strength);
     let octave_str = &format!("{}", current_octave);
 
     // Create data rows
     let rows = [
-        Row::new(vec!["Sel. Attenu", attenu_str]),
+        Row::new(vec!["Sel. Strength", strength_str]),
         Row::new(vec!["Sel. Octave", octave_str]),
     ];
 
@@ -85,8 +85,8 @@ pub fn render_dds(frame: &mut Frame, layout: Rect, channel_data: &Vec<(f64, f64)
             Axis::default()
                 .title("Strength")
                 .style(Style::default().fg(Color::White))
-                .bounds([0., 10.])
-                .labels(["0", "10"]),
+                .bounds([0., 255.])
+                .labels(["0", "255"]),
         );
 
     frame.render_widget(chart, layout);
@@ -96,7 +96,7 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
     for i in 0..layout.len() {
         // Set default values used if a channel is unassigned
         let mut signal_freq = 0.;
-        let mut signal_strength = 10.;
+        let mut signal_strength = 0.;
 
         // Check if a channel has valid data in it
         if i < channel_data.len() {
@@ -106,12 +106,12 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
 
         // Convert numerical values to string
         let freq_str = &format!("{:.1} Hz", signal_freq);
-        let attenu_str = &format!("{:.1}", 10. - signal_strength);
+        let strength_str = &format!("{:.1}", signal_strength);
 
         // Create data rows
         let rows = [
             Row::new(vec!["Freq", freq_str]),
-            Row::new(vec!["Atten", attenu_str]),
+            Row::new(vec!["Strength", strength_str]),
         ];
 
         // Define how wide cells of table are

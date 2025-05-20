@@ -43,7 +43,7 @@ impl TuneIn {
             state: AppState::Running,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
-            current_attenu: 0.,
+            current_attenu: 255.,
             current_octave: 0,
         }
     }
@@ -130,12 +130,12 @@ impl TuneIn {
                             }
                             KeyCode::Char('v') => {
                                 if self.current_attenu > 0. {
-                                    self.current_attenu -= 1.;
+                                    self.current_attenu -= 5.;
                                 }
                             }
                             KeyCode::Char('V') => {
-                                if self.current_attenu < 10. {
-                                    self.current_attenu += 1.;
+                                if self.current_attenu < 255. {
+                                    self.current_attenu += 5.;
                                 }
                             }
                             KeyCode::Char('n') => {
