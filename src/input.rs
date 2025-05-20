@@ -25,7 +25,7 @@ impl Input {
     pub const fn new() -> Self {
         Self {
             input: String::new(),
-            input_mode: InputMode::Normal,
+            input_mode: InputMode::Editing,
             character_index: 0,
         }
     }

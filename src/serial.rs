@@ -2,9 +2,9 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Flex, Layout, Position, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier, Style, Stylize},
     text::Text,
-    widgets::{Block, BorderType, Clear, List, ListState},
+    widgets::{Block, BorderType, Borders, Clear, List, ListState, Row, Table},
 };
 use serialport::{self, SerialPort};
 use std::time::Duration;
@@ -51,7 +51,11 @@ impl ComConfig {
 
     pub fn send_midi(&mut self, status: u8, note: u8, vel: u8) {
         // Todo no Com
-        self.active_com_port.as_mut().unwrap().write(&[status, note, vel]).expect("Send failed");
+        self.active_com_port
+            .as_mut()
+            .unwrap()
+            .write(&[status, note, vel])
+            .expect("Send failed");
     }
 
     pub fn key_event(&mut self, key: KeyEvent) -> AppState {
@@ -117,6 +121,36 @@ impl ComConfig {
         }
     }
 
+    pub fn get_table(&self) -> Table<'_> {
+        // Create data rows
+        let rows = if let Some(p) = &self.active_com_port {
+            if let Ok(r) = p.baud_rate() {
+                [
+                    Row::new(vec![String::from("Name"), p.name().unwrap().clone()]).green(),
+                    Row::new(vec!["Baud".to_string(), r.clone().to_string()]).green(),
+                ]
+            } else {
+                get_rows_nc()
+            }
+        } else {
+            get_rows_nc()
+        };
+
+        // Define how wide cells of table are
+        let widths = [Constraint::Percentage(30), Constraint::Fill(1)];
+
+        // Create table and the block surrounding it
+        Table::new(rows, widths)
+            .column_spacing(1)
+            .style(Style::default())
+            .block(
+                Block::new()
+                    .border_type(BorderType::Thick)
+                    .borders(Borders::ALL)
+                    .title("Serial"),
+            )
+    }
+
     //Render a popup form Com settings
     pub fn show_com_popup(&mut self, frame: &mut Frame) {
         let list = List::new(
@@ -143,19 +177,34 @@ impl ComConfig {
             .direction(Direction::Vertical)
             .constraints(vec![Constraint::Fill(1), Constraint::Length(3)])
             .split(area);
-        frame.render_stateful_widget(&list, vertical_layout[0], &mut self.list_state);
-        frame.render_widget(
-            self.input.get_input(String::from("Baud")),
-            vertical_layout[1],
-        );
-        if self.config_state == ConfigState::BaudSelection {
-            frame.set_cursor_position(Position::new(
-                // Draw the cursor at the current position in the input field.
-                // This position is can be controlled via the left and right arrow key
-                area.x + self.input.get_index() + 1,
-                // Move one line down, from the border to the input line
-                area.y + area.height - 2,
-            ));
+        match self.config_state {
+            ConfigState::PortSelection => {
+                frame.render_stateful_widget(
+                    &list.yellow(),
+                    vertical_layout[0],
+                    &mut self.list_state,
+                );
+                frame.render_widget(
+                    self.input
+                        .get_input(String::from("Baud"))
+                        .style(Style::default()),
+                    vertical_layout[1],
+                );
+            }
+            ConfigState::BaudSelection => {
+                frame.render_stateful_widget(&list, vertical_layout[0], &mut self.list_state);
+                frame.render_widget(
+                    self.input.get_input(String::from("Baud")),
+                    vertical_layout[1],
+                );
+                frame.set_cursor_position(Position::new(
+                    // Draw the cursor at the current position in the input field.
+                    // This position is can be controlled via the left and right arrow key
+                    area.x + self.input.get_index() + 1,
+                    // Move one line down, from the border to the input line
+                    area.y + area.height - 2,
+                ));
+            }
         }
     }
 }
@@ -169,105 +218,9 @@ fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     area
 }
 
-// fn serial_connect() -> io::Result<Box<dyn SerialPort>> {
-//     let ports = serialport::available_ports().expect("no divices found");
-//     for _ in 0..42 {
-//         let n = ports.len();
-//         println!("{}", n);
-//         for (i, p) in ports.iter().enumerate() {
-//             println!("{}: {}", i + 1, p.port_name);
-//         }
-//         println!("Please select which Port to use:");
-//         let mut input = String::new();
-//         io::stdin().read_line(&mut input).expect("failed to read");
-//         let input: usize = input.trim().parse().unwrap_or(0);
-//         println!("{}", input);
-//         if input > 0 && input <= n {
-//             return Ok(serialport::new(ports[input - 1].port_name.clone(), 31_250)
-//                 .timeout(Duration::from_millis(10))
-//                 .open()
-//                 .expect("Failed to open port"));
-//         } else {
-//             println!("Input is invalid please use the number of a port")
-//         }
-//     }
-//     panic!("WTF are you doing just use a valid number");
-// }
-//
-// fn print_events(mut port: Box<dyn SerialPort>) -> io::Result<()> {
-//     loop {
-//         let mut midi_frame: [u8; 3] = [0x00, 0x00, 0x00];
-//         // Blocking read
-//         let event = read()?;
-//
-//         if let Event::Key(key_event) = event {
-//             if let KeyEventKind::Press = key_event.kind {
-//                 midi_frame[0] = 0x90;
-//             } else if let KeyEventKind::Release = key_event.kind {
-//                 midi_frame[0] = 0x80;
-//             }
-//             if let KeyCode::Char(c) = key_event.code {
-//                 match c {
-//                     'a' => {
-//                         midi_frame[1] = 0x0c * 1;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     's' => {
-//                         midi_frame[1] = 0x0c * 2;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'd' => {
-//                         midi_frame[1] = 0x0c * 3;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'f' => {
-//                         midi_frame[1] = 0x0c * 4;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'g' => {
-//                         midi_frame[1] = 0x0c * 5;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'h' => {
-//                         midi_frame[1] = 0x0c * 6;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'j' => {
-//                         midi_frame[1] = 0x0c * 7;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'k' => {
-//                         midi_frame[1] = 0x0c * 8;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'l' => {
-//                         midi_frame[1] = 0x0c * 9;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     'ö' => {
-//                         midi_frame[1] = 0x0c * 10;
-//                         midi_frame[2] = 0x60
-//                     }
-//                     _ => {
-//                         midi_frame[1] = 0x0c * 7;
-//                         midi_frame[2] = 0x60
-//                     }
-//                 }
-//                 port.write(&midi_frame).expect("write failed");
-//                 println!(
-//                     "Status: {:#x} Note: {:#x} Value: {:#x}\r",
-//                     midi_frame[0], midi_frame[1], midi_frame[2]
-//                 );
-//             }
-//         }
-//         println!("Event: {:?}\r", event);
-//
-//         if event == Event::Key(KeyCode::Char('c').into()) {
-//             println!("Cursor position: {:?}\r", position());
-//         }
-//         if event == Event::Key(KeyCode::Esc.into()) {
-//             break;
-//         }
-//     }
-//     Ok(())
-// }
+fn get_rows_nc() -> [Row<'static>; 2] {
+    [
+        Row::new(vec![String::from("Name"), "Not connected".to_string()]).red(),
+        Row::new(vec!["Baud".to_string(), "Not connected".to_string()]).red(),
+    ]
+}

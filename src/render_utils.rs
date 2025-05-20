@@ -9,6 +9,7 @@ use ratatui::{
 pub fn render_general(
     frame: &mut Frame,
     layout: Vec<Rect>,
+    serial: Table,
     current_strength: f64,
     current_octave: i32,
 ) {
@@ -43,18 +44,8 @@ pub fn render_general(
                     bottom: 0,
                 }),
         );
-
     frame.render_widget(table.clone(), layout[0]);
-
-    frame.render_widget(
-        Block::new()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .border_style(Style::default())
-            .style(Style::default())
-            .title("Communication"),
-        layout[1],
-    );
+    frame.render_widget(serial, layout[1]);
 }
 
 pub fn render_dds(frame: &mut Frame, layout: Rect, channel_data: &Vec<(f64, f64)>) {
