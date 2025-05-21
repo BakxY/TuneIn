@@ -1,9 +1,8 @@
 use ratatui::{
-    Frame,
-    layout::{Constraint, Rect},
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
+    layout::{Constraint, Direction, Layout, Rect}, style::{palette::tailwind, Color, Style, Stylize}, symbols, text::{Line, Span}, widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, Padding, Row, Table,
+        Widget,
+    }, Frame
 };
 
 pub fn render_general(
@@ -12,39 +11,42 @@ pub fn render_general(
     current_strength: f64,
     current_octave: i32,
 ) {
-    // Convert numerical values to string
-    let strength_str = &format!("{}", current_strength);
-    let octave_str = &format!("{}", current_octave);
+    // Create the block surrounding signal info
+    frame.render_widget(
+        Block::new()
+            .border_type(BorderType::Thick)
+            .borders(Borders::ALL)
+            .border_style(Style::default())
+            .style(Style::default())
+            .title("Info")
+            .padding(Padding {
+                left: 1,
+                right: 1,
+                top: 0,
+                bottom: 0,
+            }),
+        layout[0],
+    );
 
-    // Create data rows
-    let rows = [
-        Row::new(vec!["Sel. Strength", strength_str]),
-        Row::new(vec!["Sel. Octave", octave_str]),
-    ];
+    let signal_info_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(vec![Constraint::Length(4), Constraint::Length(4)])
+        .split(layout[0]);
 
-    // Define how wide cells of table are
-    let widths = [Constraint::Percentage(50), Constraint::Percentage(50)];
+    let strength_gauge_label = format!("0 / {} / 255", current_strength);
 
-    // Create table and the block surrounding it
-    let table = Table::new(rows, widths)
-        .column_spacing(1)
-        .style(Style::new().white())
+    Gauge::default()
         .block(
             Block::new()
-                .border_type(BorderType::Thick)
-                .borders(Borders::ALL)
-                .border_style(Style::default())
-                .style(Style::default())
-                .title("Info")
-                .padding(Padding {
-                    left: 1,
-                    right: 1,
-                    top: 0,
-                    bottom: 0,
-                }),
-        );
-
-    frame.render_widget(table.clone(), layout[0]);
+                .borders(Borders::NONE)
+                .title(Line::from("Strength").centered())
+                .fg(tailwind::SLATE.c200),
+        )
+        .gauge_style(/*Style::new().bg(Color::Blue).fg(Color::Cyan)*/tailwind::BLUE.c800)
+        .label(strength_gauge_label)
+        .ratio(current_strength / 255.)
+        .render(signal_info_layout[0], frame.buffer_mut());
 
     frame.render_widget(
         Block::new()
