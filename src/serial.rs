@@ -79,7 +79,6 @@ impl ComConfig {
             ConfigState::BaudSelection => match key.code {
                 KeyCode::Tab => self.toggle_state(),
                 KeyCode::Enter => {
-                    // Todo Error handling
                     match self.input.submit_message().parse() {
                         Ok(b) => {
                             self.baud = b;
