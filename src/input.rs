@@ -107,10 +107,11 @@ impl Input {
                 KeyCode::Char('q') | KeyCode::Esc => {
                     should_exit = true;
                 }
-                KeyCode::Char('e') => {
+                KeyCode::Char('i') => {
                     self.input_mode = InputMode::Editing;
                 }
-                KeyCode::Backspace => {
+                KeyCode::Backspace | KeyCode::Char('x') => self.delete_char(),
+                KeyCode::Char('d') => {
                     self.input.clear();
                     self.reset_cursor();
                 }
