@@ -1,14 +1,19 @@
+use std::rc::Rc;
+
 use ratatui::{
     Frame,
-    layout::{Constraint, Rect},
+    layout::{self, Constraint, Rect},
     style::{Color, Style, Stylize},
     symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
+    widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Paragraph, Row,
+        Table, canvas::Line,
+    },
 };
 
 pub fn render_general(
     frame: &mut Frame,
-    layout: Vec<Rect>,
+    layout: Rc<[Rect]>,
     serial: Table,
     current_strength: f64,
     current_octave: i32,
@@ -48,7 +53,7 @@ pub fn render_general(
     frame.render_widget(serial, layout[1]);
 }
 
-pub fn render_dds(frame: &mut Frame, layout: Rect, channel_data: &Vec<(f64, f64)>) {
+pub fn render_dds(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec<(f64, f64)>) {
     // Create the dataset for the fft graph
     let dds_dataset = Dataset::default()
         .marker(symbols::Marker::Braille)
@@ -80,10 +85,10 @@ pub fn render_dds(frame: &mut Frame, layout: Rect, channel_data: &Vec<(f64, f64)
                 .labels(["0", "255"]),
         );
 
-    frame.render_widget(chart, layout);
+    frame.render_widget(chart, layout[0]);
 }
 
-pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<(f64, f64)>) {
+pub fn render_channels(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec<(f64, f64)>) {
     for i in 0..layout.len() {
         // Set default values used if a channel is unassigned
         let mut signal_freq = 0.;
@@ -129,4 +134,17 @@ pub fn render_channels(frame: &mut Frame, layout: Vec<Rect>, channel_data: &Vec<
 
         frame.render_widget(table.clone(), layout[i]);
     }
+}
+
+pub fn render_shortcuts(frame: &mut Frame, layout: Rc<[Rect]>) {
+    let shortcuts = "Quit: q | \
+                    Com Config: p | \
+                    Play tone: Home row | \
+                    --Attenuation: v | \
+                    ++Attenuation: V | \
+                    --Octave: n | \
+                    ++Octave: N | \
+                    :c";
+    let paragraph = Paragraph::new(shortcuts).style(Style::new().blue());
+    frame.render_widget(paragraph, layout[1]);
 }

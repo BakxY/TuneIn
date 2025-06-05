@@ -1,8 +1,6 @@
 use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use dds_data::DdsData;
-use ratatui::{
-    DefaultTerminal, Frame,
-};
+use ratatui::{DefaultTerminal, Frame};
 use serial::ComConfig;
 use std::{
     io::Result,
@@ -12,9 +10,9 @@ use std::{
 mod dds_data;
 mod input;
 mod layout_utils;
+mod midi_utils;
 mod render_utils;
 mod serial;
-mod midi_utils;
 
 fn main() -> Result<()> {
     let terminal = ratatui::init();
@@ -170,16 +168,25 @@ impl TuneIn {
     fn on_tick(&mut self) {}
 
     fn draw(&mut self, frame: &mut Frame) {
-        let (general_layout, fft_layout, channel_layout) =
+        let (base_layer, general_layout, fft_layout, channel_layout) =
             layout_utils::generate_main_layout(frame);
         let serial_table = self.com_config.get_table();
 
-        render_utils::render_general(frame, general_layout, serial_table, self.current_attenu, self.current_octave);
+        render_utils::render_general(
+            frame,
+            general_layout,
+            serial_table,
+            self.current_attenu,
+            self.current_octave,
+        );
         render_utils::render_dds(frame, fft_layout, &self.dds_config.signal_data);
         render_utils::render_channels(frame, channel_layout, &self.dds_config.signal_data);
 
         if self.state == AppState::ComConfig {
             self.com_config.show_com_popup(frame);
+            self.com_config.render_shortcuts(frame, base_layer);
+        } else {
+            render_utils::render_shortcuts(frame, base_layer);
         }
     }
 }

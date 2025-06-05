@@ -142,10 +142,31 @@ impl Input {
                 InputMode::Error => Style::default().fg(Color::Red),
                 InputMode::Editing => Style::default().fg(Color::Yellow),
             })
-            .block(Block::bordered().title(title).border_type(BorderType::Thick))
+            .block(
+                Block::bordered()
+                    .title(title)
+                    .border_type(BorderType::Thick),
+            )
     }
 
     pub fn get_index(&self) -> u16 {
         self.character_index.try_into().unwrap()
+    }
+    pub fn get_shortcuts(&self) -> &str {
+        match self.input_mode {
+            InputMode::Editing => {
+                "Normal Mode: Esc | \
+                Submit: Enter | \
+                Normal Text writing"
+            }
+            InputMode::Normal => {
+                "Quit Config: q | \
+                Input Mode: i | \
+                Submit: Enter | \
+                Delet Char: Backspace/x |\
+                Clear input: d"
+            }
+            InputMode::Error => "Press any key",
+        }
     }
 }

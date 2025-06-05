@@ -4,10 +4,10 @@ use ratatui::{
     layout::{Constraint, Direction, Flex, Layout, Position, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::Text,
-    widgets::{Block, BorderType, Borders, Clear, List, ListState, Row, Table},
+    widgets::{Block, BorderType, Borders, Clear, List, ListState, Paragraph, Row, Table},
 };
 use serialport::{self, SerialPort};
-use std::time::Duration;
+use std::{rc::Rc, time::Duration};
 
 use crate::AppState;
 use crate::input::Input;
@@ -78,25 +78,23 @@ impl ComConfig {
             },
             ConfigState::BaudSelection => match key.code {
                 KeyCode::Tab => self.toggle_state(),
-                KeyCode::Enter => {
-                    match self.input.submit_message().parse() {
-                        Ok(b) => {
-                            self.baud = b;
-                            self.active_com_port = Some(
-                                serialport::new(
-                                    self.com_ports[self.port_index].port_name.clone(),
-                                    self.baud,
-                                )
-                                .timeout(Duration::from_millis(10))
-                                .open()
-                                .expect("Failed to open port"),
-                            );
-                            self.config_state = ConfigState::BaudSelection;
-                            app_state = AppState::Running;
-                        }
-                        Err(_) => self.input.display_error(String::from("Not a valid value")),
+                KeyCode::Enter => match self.input.submit_message().parse() {
+                    Ok(b) => {
+                        self.baud = b;
+                        self.active_com_port = Some(
+                            serialport::new(
+                                self.com_ports[self.port_index].port_name.clone(),
+                                self.baud,
+                            )
+                            .timeout(Duration::from_millis(10))
+                            .open()
+                            .expect("Failed to open port"),
+                        );
+                        self.config_state = ConfigState::BaudSelection;
+                        app_state = AppState::Running;
                     }
-                }
+                    Err(_) => self.input.display_error(String::from("Not a valid value")),
+                },
                 _ => {
                     if self.input.key_event(key) {
                         app_state = AppState::Running;
@@ -205,6 +203,20 @@ impl ComConfig {
                 ));
             }
         }
+    }
+    pub fn render_shortcuts(&self, frame: &mut Frame, layout: Rc<[Rect]>) {
+        let shortcuts = if self.config_state == ConfigState::PortSelection {
+            "Quit Config: q | \
+                    Switch to Baud entry: tab | \
+                    Submit: Enter | \
+                    Next Entry: Down/j | \
+                    Prev Entry: Up/k | \
+                    Rescan serialports: r"
+        } else {
+            self.input.get_shortcuts()
+        };
+        let paragraph = Paragraph::new(shortcuts).style(Style::new().blue());
+        frame.render_widget(paragraph, layout[1]);
     }
 }
 
