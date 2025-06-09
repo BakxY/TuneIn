@@ -1,6 +1,8 @@
+use std::ptr::null;
+
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols::{self, line::Set}, text::Line, widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, LineGauge, Padding, Row, Table, Widget
+        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, LineGauge, Padding, Paragraph, Row, Table, Widget
     }, Frame
 };
 
@@ -31,36 +33,32 @@ pub fn render_general(
         .direction(Direction::Vertical)
         .margin(1)
         .horizontal_margin(2)
-        .constraints(vec![Constraint::Length(4), Constraint::Length(4)])
+        .constraints(vec![Constraint::Length(3), Constraint::Length(3)])
         .split(layout[0]);
-
-    let strength_gauge_label = format!("0 / {:0>3} / 255", current_strength);
 
     LineGauge::default()
         .block(
             Block::new()
                 .borders(Borders::NONE)
-                .title(Line::from("Strength").centered())
+                .title(Line::from("Strength (0 <-> 255)").centered())
         )
         .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
         .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .label(format!("{:0>3}", current_strength))
         .line_set(symbols::line::NORMAL)
-        .label(strength_gauge_label)
         .ratio(current_strength / 255.)
         .render(signal_info_layout[0], frame.buffer_mut());
 
-    let octave_gauge_label = format!("-6 / {:0>2} / 4", current_octave);
-
     LineGauge::default()
         .block(
             Block::new()
                 .borders(Borders::NONE)
-                .title(Line::from("Octave").centered())
+                .title(Line::from("Octave (-6 <-> 4)").centered())
         )
         .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
         .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .label(format!("{:>3}", current_octave))
         .line_set(symbols::line::NORMAL)
-        .label(octave_gauge_label)
         .ratio((current_octave + 6) as f64 / 10.)
         .render(signal_info_layout[1], frame.buffer_mut());
 
