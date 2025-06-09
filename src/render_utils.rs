@@ -1,7 +1,6 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect}, style::{palette::tailwind, Color, Style, Stylize}, symbols, text::{Line, Span}, widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, Padding, Row, Table,
-        Widget,
+    layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols::{self, line::Set}, text::Line, widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, LineGauge, Padding, Row, Table, Widget
     }, Frame
 };
 
@@ -31,22 +30,39 @@ pub fn render_general(
     let signal_info_layout = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
+        .horizontal_margin(2)
         .constraints(vec![Constraint::Length(4), Constraint::Length(4)])
         .split(layout[0]);
 
-    let strength_gauge_label = format!("0 / {} / 255", current_strength);
+    let strength_gauge_label = format!("0 / {:0>3} / 255", current_strength);
 
-    Gauge::default()
+    LineGauge::default()
         .block(
             Block::new()
                 .borders(Borders::NONE)
                 .title(Line::from("Strength").centered())
-                .fg(tailwind::SLATE.c200),
         )
-        .gauge_style(/*Style::new().bg(Color::Blue).fg(Color::Cyan)*/tailwind::BLUE.c800)
+        .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
+        .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .line_set(symbols::line::NORMAL)
         .label(strength_gauge_label)
         .ratio(current_strength / 255.)
         .render(signal_info_layout[0], frame.buffer_mut());
+
+    let octave_gauge_label = format!("-6 / {:0>2} / 4", current_octave);
+
+    LineGauge::default()
+        .block(
+            Block::new()
+                .borders(Borders::NONE)
+                .title(Line::from("Octave").centered())
+        )
+        .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
+        .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .line_set(symbols::line::NORMAL)
+        .label(octave_gauge_label)
+        .ratio((current_octave + 6) as f64 / 10.)
+        .render(signal_info_layout[1], frame.buffer_mut());
 
     frame.render_widget(
         Block::new()
