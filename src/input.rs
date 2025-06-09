@@ -25,7 +25,7 @@ impl Input {
     pub const fn new() -> Self {
         Self {
             input: String::new(),
-            input_mode: InputMode::Normal,
+            input_mode: InputMode::Editing,
             character_index: 0,
         }
     }
@@ -107,10 +107,11 @@ impl Input {
                 KeyCode::Char('q') | KeyCode::Esc => {
                     should_exit = true;
                 }
-                KeyCode::Char('e') => {
+                KeyCode::Char('i') => {
                     self.input_mode = InputMode::Editing;
                 }
-                KeyCode::Backspace => {
+                KeyCode::Backspace | KeyCode::Char('x') => self.delete_char(),
+                KeyCode::Char('d') => {
                     self.input.clear();
                     self.reset_cursor();
                 }

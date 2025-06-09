@@ -40,7 +40,7 @@ struct TuneIn {
 impl TuneIn {
     fn new() -> Self {
         Self {
-            state: AppState::Running,
+            state: AppState::ComConfig,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
             current_attenu: 255.,
@@ -172,8 +172,9 @@ impl TuneIn {
     fn draw(&mut self, frame: &mut Frame) {
         let (general_layout, fft_layout, channel_layout) =
             layout_utils::generate_main_layout(frame);
+        let serial_table = self.com_config.get_table();
 
-        render_utils::render_general(frame, general_layout, self.current_attenu, self.current_octave);
+        render_utils::render_general(frame, general_layout, serial_table, self.current_attenu, self.current_octave);
         render_utils::render_dds(frame, fft_layout, &self.dds_config.signal_data);
         render_utils::render_channels(frame, channel_layout, &self.dds_config.signal_data);
 
