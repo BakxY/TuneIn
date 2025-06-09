@@ -1,9 +1,9 @@
+use std::ptr::null;
+
 use ratatui::{
-    Frame,
-    layout::{Constraint, Rect},
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Row, Table},
+    layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols::{self, line::Set}, text::Line, widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, Gauge, GraphType, LineGauge, Padding, Paragraph, Row, Table, Widget
+    }, Frame
 };
 
 pub fn render_general(
@@ -13,38 +13,66 @@ pub fn render_general(
     current_strength: f64,
     current_octave: i32,
 ) {
-    // Convert numerical values to string
-    let strength_str = &format!("{}", current_strength);
-    let octave_str = &format!("{}", current_octave);
+    // Create the block surrounding signal info
+    frame.render_widget(
+        Block::new()
+            .border_type(BorderType::Thick)
+            .borders(Borders::ALL)
+            .border_style(Style::default())
+            .style(Style::default())
+            .title("Info")
+            .padding(Padding {
+                left: 1,
+                right: 1,
+                top: 0,
+                bottom: 0,
+            }),
+        layout[0],
+    );
 
-    // Create data rows
-    let rows = [
-        Row::new(vec!["Sel. Strength", strength_str]),
-        Row::new(vec!["Sel. Octave", octave_str]),
-    ];
+    let signal_info_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .horizontal_margin(2)
+        .constraints(vec![Constraint::Length(3), Constraint::Length(3)])
+        .split(layout[0]);
 
-    // Define how wide cells of table are
-    let widths = [Constraint::Percentage(50), Constraint::Percentage(50)];
-
-    // Create table and the block surrounding it
-    let table = Table::new(rows, widths)
-        .column_spacing(1)
-        .style(Style::new().white())
+    LineGauge::default()
         .block(
             Block::new()
-                .border_type(BorderType::Thick)
-                .borders(Borders::ALL)
-                .border_style(Style::default())
-                .style(Style::default())
-                .title("Info")
-                .padding(Padding {
-                    left: 1,
-                    right: 1,
-                    top: 0,
-                    bottom: 0,
-                }),
-        );
-    frame.render_widget(table.clone(), layout[0]);
+                .borders(Borders::NONE)
+                .title(Line::from("Strength (0 <-> 255)").centered())
+        )
+        .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
+        .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .label(format!("{:0>3}", current_strength))
+        .line_set(symbols::line::NORMAL)
+        .ratio(current_strength / 255.)
+        .render(signal_info_layout[0], frame.buffer_mut());
+
+    LineGauge::default()
+        .block(
+            Block::new()
+                .borders(Borders::NONE)
+                .title(Line::from("Octave (-6 <-> 4)").centered())
+        )
+        .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
+        .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
+        .label(format!("{:>3}", current_octave))
+        .line_set(symbols::line::NORMAL)
+        .ratio((current_octave + 6) as f64 / 10.)
+        .render(signal_info_layout[1], frame.buffer_mut());
+
+    frame.render_widget(
+        Block::new()
+            .border_type(BorderType::Thick)
+            .borders(Borders::ALL)
+            .border_style(Style::default())
+            .style(Style::default())
+            .title("Communication"),
+        layout[1],
+    );
+  
     frame.render_widget(serial, layout[1]);
 }
 
