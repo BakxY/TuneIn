@@ -4,13 +4,13 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
-
+// Generate the main Layout
 pub fn generate_main_layout(frame: &mut Frame) -> (Rc<[Rect]>, Rc<[Rect]>, Rc<[Rect]>, Rc<[Rect]>) {
+    // Base layer
     let base_layer = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
         .split(frame.area());
-
     let vertical_temp_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])

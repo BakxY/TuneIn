@@ -1,11 +1,17 @@
 use std::rc::Rc;
 
 use ratatui::{
-    layout::{self, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols, text::Line, widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, LineGauge, Padding, Paragraph, Row, Table, Widget
-    }, Frame
+    Frame,
+    layout::{self, Constraint, Direction, Layout, Rect},
+    style::{Color, Style, Stylize},
+    symbols,
+    text::Line,
+    widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, LineGauge, Padding, Paragraph,
+        Row, Table, Widget,
+    },
 };
-
+// Render the Main part of the application
 pub fn render_general(
     frame: &mut Frame,
     layout: Rc<[Rect]>,
@@ -41,7 +47,7 @@ pub fn render_general(
         .block(
             Block::new()
                 .borders(Borders::NONE)
-                .title(Line::from("Strength (0 <-> 255)").centered())
+                .title(Line::from("Strength (0 <-> 255)").centered()),
         )
         .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
         .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
@@ -54,7 +60,7 @@ pub fn render_general(
         .block(
             Block::new()
                 .borders(Borders::NONE)
-                .title(Line::from("Octave (-6 <-> 4)").centered())
+                .title(Line::from("Octave (-6 <-> 4)").centered()),
         )
         .filled_style(Style::default().fg(Color::Blue).bg(Color::Blue))
         .unfilled_style(Style::default().fg(Color::Red).bg(Color::Red))
@@ -72,10 +78,10 @@ pub fn render_general(
             .title("Communication"),
         layout[1],
     );
-  
+
     frame.render_widget(serial, layout[1]);
 }
-
+// Render the dds visualisation
 pub fn render_dds(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec<(f64, f64)>) {
     // Create the dataset for the fft graph
     let dds_dataset = Dataset::default()
@@ -110,7 +116,7 @@ pub fn render_dds(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec<(f64
 
     frame.render_widget(chart, layout[0]);
 }
-
+// Render the current state of the different states
 pub fn render_channels(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec<(f64, f64)>) {
     for i in 0..layout.len() {
         // Set default values used if a channel is unassigned
@@ -158,7 +164,7 @@ pub fn render_channels(frame: &mut Frame, layout: Rc<[Rect]>, channel_data: &Vec
         frame.render_widget(table.clone(), layout[i]);
     }
 }
-
+// Render shortcuts
 pub fn render_shortcuts(frame: &mut Frame, layout: Rc<[Rect]>) {
     let shortcuts = "Quit: q | \
                     Com Config: p | \
