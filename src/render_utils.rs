@@ -1,14 +1,9 @@
 use std::rc::Rc;
 
 use ratatui::{
-    Frame,
-    layout::{self, Constraint, Rect},
-    style::{Color, Style, Stylize},
-    symbols,
-    widgets::{
-        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Padding, Paragraph, Row,
-        Table, canvas::Line,
-    },
+    layout::{self, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, symbols, text::Line, widgets::{
+        Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, LineGauge, Padding, Paragraph, Row, Table, Widget
+    }, Frame
 };
 
 pub fn render_general(
