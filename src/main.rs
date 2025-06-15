@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use dds_data::DdsData;
 use ratatui::{DefaultTerminal, Frame};
 use serial::ComConfig;
@@ -57,6 +57,10 @@ impl TuneIn {
 
             if event::poll(tick_rate)? {
                 if let Event::Key(key) = event::read()? {
+                    if key.kind != KeyEventKind::Press {
+                        continue;
+                    }
+
                     if key.code == KeyCode::Char('c')
                         && key.modifiers.contains(KeyModifiers::CONTROL)
                     {
