@@ -140,11 +140,11 @@ pub fn render_shortcuts(frame: &mut Frame, layout: Rc<[Rect]>) {
     let shortcuts = "Quit: q | \
                     Com Config: p | \
                     Play tone: Home row | \
-                    --Attenuation: v | \
-                    ++Attenuation: V | \
+                    --Strength: v | \
+                    ++Strength: V | \
                     --Octave: n | \
                     ++Octave: N | \
-                    :c";
+                    Clear notes: c";
     let paragraph = Paragraph::new(shortcuts).style(Style::new().blue());
     frame.render_widget(paragraph, layout[1]);
 }
