@@ -11,7 +11,7 @@ impl DdsData {
     pub fn new() -> Self {
         Self {
             signal_data: Vec::new(),
-            rand: true,
+            rand: false,
         }
     }
     // Add a signal to the dds vec and send the midi message for it
