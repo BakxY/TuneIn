@@ -171,6 +171,7 @@ pub fn render_shortcuts(frame: &mut Frame, layout: Rc<[Rect]>) {
                     Play tone: Home row | \
                     --Strength: v | \
                     ++Strength: V | \
+                    Toggle random Strength: r | \
                     --Octave: n | \
                     ++Octave: N | \
                     Clear notes: c";

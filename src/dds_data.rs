@@ -1,7 +1,9 @@
 use crate::{midi_utils, serial::ComConfig};
+use rand::Rng;
 // DDS main struct
 pub struct DdsData {
     pub signal_data: Vec<(f64, f64)>, //Current DDS data
+    rand: bool,
 }
 
 impl DdsData {
@@ -9,10 +11,14 @@ impl DdsData {
     pub fn new() -> Self {
         Self {
             signal_data: Vec::new(),
+            rand: true,
         }
     }
     // Add a signal to the dds vec and send the midi message for it
-    pub fn add_signal(&mut self, com_config: &mut ComConfig, freq: f64, strength: f64) {
+    pub fn add_signal(&mut self, com_config: &mut ComConfig, freq: f64, mut strength: f64) {
+        if self.rand {
+            strength = rand::rng().random();
+        }
         // Check for duplicats and if ther is space left
         if self.signal_data.len() < 10 && !self.signal_data.contains(&(freq, strength)) {
             // Send the midi Message to turn tone on
@@ -41,5 +47,8 @@ impl DdsData {
         } else {
             self.add_signal(com_config, freq, strength);
         }
+    }
+    pub fn toggle_rand(&mut self){
+        self.rand = !self.rand;
     }
 }

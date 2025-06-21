@@ -173,6 +173,9 @@ impl TuneIn {
                                     self.dds_config.remove_signal(&mut self.com_config, tone.0);
                                 }
                             }
+                            KeyCode::Char('r') => {
+                                self.dds_config.toggle_rand();
+                            }
                             _ => {}
                         },
                         // Forward Keyevents to the com subsystem
