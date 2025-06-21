@@ -7,12 +7,16 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::manual_packets::ManualPackets;
+
 mod dds_data;
 mod input;
 mod layout_utils;
 mod midi_utils;
 mod render_utils;
 mod serial;
+mod manual_packets;
+mod popup_utils;
 
 //Entry Point
 fn main() -> Result<()> {
@@ -30,17 +34,20 @@ fn main() -> Result<()> {
 pub enum AppState {
     // Running state where the user sends MIDI
     Running = 0,
+    // Manual running state for sending packets with custom values
+    Manual = 1,
     // Config state for selecting and configuring the com connection
-    ComConfig = 1,
+    ComConfig = 2,
 }
 
 // Main App struct
 struct TuneIn {
-    state: AppState,               //Main States
-    dds_config: dds_data::DdsData, //DDS main struct
-    com_config: serial::ComConfig, //Com main struct
-    current_attenu: f64,           //Current attenuatino for sending MIDI
-    current_octave: i32,           //Current octave for sending MIDI
+    state: AppState,                                //Main States
+    dds_config: dds_data::DdsData,                  //DDS main struct
+    com_config: serial::ComConfig,                  //Com main struct
+    manual_config: manual_packets::ManualPackets,   //Manual mode main struct
+    current_attenu: f64,                            //Current attenuatino for sending MIDI
+    current_octave: i32,                            //Current octave for sending MIDI
 }
 
 impl TuneIn {
@@ -50,8 +57,9 @@ impl TuneIn {
             state: AppState::ComConfig,
             dds_config: DdsData::new(),
             com_config: ComConfig::new(),
-            current_attenu: 255.,
-            current_octave: 0,
+            manual_config: ManualPackets::new(),
+            current_attenu: 185.,
+            current_octave: 1,
         }
     }
     // Run the Programm
@@ -84,6 +92,10 @@ impl TuneIn {
                         AppState::Running => match key.code {
                             //Quit
                             KeyCode::Char('q') => break Ok(()),
+                            //Change state to manual mode
+                            KeyCode::Char('m') => {
+                                self.state = AppState::Manual;
+                            }
                             //Change state to ComConfig
                             KeyCode::Char('p') => {
                                 self.state = AppState::ComConfig;
@@ -175,6 +187,8 @@ impl TuneIn {
                             }
                             _ => {}
                         },
+                        // Forward Keyevents to the manual subsystem
+                        AppState::Manual => self.state = self.manual_config.key_event(key, &mut self.com_config),
                         // Forward Keyevents to the com subsystem
                         AppState::ComConfig => self.state = self.com_config.key_event(key),
                     }
@@ -204,12 +218,20 @@ impl TuneIn {
         );
         render_utils::render_dds(frame, fft_layout, &self.dds_config.signal_data);
         render_utils::render_channels(frame, channel_layout, &self.dds_config.signal_data);
+
         // Show the com popup and shortcuts
-        if self.state == AppState::ComConfig {
-            self.com_config.show_com_popup(frame);
-            self.com_config.render_shortcuts(frame, base_layer);
-        } else {
-            render_utils::render_shortcuts(frame, base_layer);
+        match self.state {
+            AppState::Manual => {
+                self.manual_config.show_manual_popup(frame);
+                self.manual_config.render_shortcuts(frame, base_layer);
+            },
+            AppState::ComConfig => {
+                self.com_config.show_com_popup(frame);
+                self.com_config.render_shortcuts(frame, base_layer);
+            },
+            _ => {
+                render_utils::render_shortcuts(frame, base_layer);
+            }
         }
     }
 }

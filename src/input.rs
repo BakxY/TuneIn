@@ -14,8 +14,8 @@ pub struct Input {
     /// Current input mode
     input_mode: InputMode,
 }
-// Differnt Moder
-enum InputMode {
+// Different Modes
+pub enum InputMode {
     Normal,  //Moving around text
     Error,   //Displaying a error
     Editing, //Writing text
@@ -96,9 +96,13 @@ impl Input {
     // Submit a input
     pub fn submit_message(&mut self) -> String {
         let tmp_input = self.input.clone();
+        self.clear_input();
+        return tmp_input;
+    }
+    // Clear input field
+    pub fn clear_input(&mut self) {
         self.input.clear();
         self.reset_cursor();
-        return tmp_input;
     }
     // Key event handling
     pub fn key_event(&mut self, key: KeyEvent) -> bool {
