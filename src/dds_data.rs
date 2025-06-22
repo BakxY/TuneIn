@@ -20,7 +20,7 @@ impl DdsData {
             strength = rand::rng().random_range(0.0..255.0);
         }
         // Check for duplicats and if ther is space left
-        if self.signal_data.len() < 10 && !self.signal_data.contains(&(freq, strength)) {
+        if self.signal_data.len() < 10 {
             // Send the midi Message to turn tone on
             com_config.send_midi(0x90, midi_utils::freq_to_note_id(freq), strength as u8);
             // Add to vec
@@ -42,11 +42,16 @@ impl DdsData {
     }
     // Toggle a signal
     pub fn toggle_signal(&mut self, com_config: &mut ComConfig, freq: f64, strength: f64) {
-        if self.signal_data.contains(&(freq, strength)) {
-            self.remove_signal(com_config, freq);
-        } else {
-            self.add_signal(com_config, freq, strength);
+        // Search if a signal with same freq exists
+        for signal in &self.signal_data {
+            if signal.0 == freq {
+                self.remove_signal(com_config, freq);
+                return;
+            }
         }
+
+        // If signal wasn't in array, turn it on
+        self.add_signal(com_config, freq, strength);
     }
     pub fn toggle_rand(&mut self){
         self.rand = !self.rand;
