@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use ratatui::{
     Frame,
-    layout::{self, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     symbols,
     text::Line,

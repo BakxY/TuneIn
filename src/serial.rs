@@ -1,7 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Flex, Layout, Position, Rect},
+    layout::{Constraint, Direction, Layout, Position, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::Text,
     widgets::{Block, BorderType, Borders, Clear, List, ListState, Paragraph, Row, Table},
@@ -11,6 +11,7 @@ use std::{rc::Rc, time::Duration};
 
 use crate::AppState;
 use crate::input::Input;
+use crate::popup_utils::popup_area;
 
 // Different states
 #[derive(Debug, PartialEq, Eq)]
@@ -235,15 +236,6 @@ impl ComConfig {
         let paragraph = Paragraph::new(shortcuts).style(Style::new().blue());
         frame.render_widget(paragraph, layout[1]);
     }
-}
-
-/// helper function to create a centered rect using up certain percentage of the available rect `r`
-fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
-    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
-    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
-    let [area] = vertical.areas(area);
-    let [area] = horizontal.areas(area);
-    area
 }
 
 fn get_rows_nc() -> [Row<'static>; 2] {
