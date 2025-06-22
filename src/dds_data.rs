@@ -17,7 +17,7 @@ impl DdsData {
     // Add a signal to the dds vec and send the midi message for it
     pub fn add_signal(&mut self, com_config: &mut ComConfig, freq: f64, mut strength: f64) {
         if self.rand {
-            strength = rand::rng().random();
+            strength = rand::rng().random_range(0.0..255.0);
         }
         // Check for duplicats and if ther is space left
         if self.signal_data.len() < 10 && !self.signal_data.contains(&(freq, strength)) {
