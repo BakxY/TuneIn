@@ -4,7 +4,7 @@
 
 TuneIn is a cross-platform terminal user interface (TUI) application designed for testing MIDI synthesizers. It simplifies the process of connecting to a serial port and sending MIDI packets, replacing complex multi-software setups with a single, intuitive tool.
 
-![TuneIn Banner](./docs/tunein_banner.png#center)
+![TuneIn Banner](./tunein_banner.png#center)
 
 ## Table of Contents
 
