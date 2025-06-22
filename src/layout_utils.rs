@@ -26,20 +26,26 @@ pub fn generate_main_layout(frame: &mut Frame) -> (Rc<[Rect]>, Rc<[Rect]>, Rc<[R
         .constraints(vec![Constraint::Percentage(50); 2])
         .split(vertical_temp_layout[1]);
 
-    let chanel_layout = Layout::default()
+    let channel_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![Constraint::Percentage(50); 2])
         .split(main_layout[1]);
 
-    let _upper_channel_layout = Layout::default()
+    let mut upper_channel_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Percentage(20); 5])
-        .split(chanel_layout[0]);
+        .split(channel_layout[0])
+        .to_vec();
 
-    let _lower_channel_layout = Layout::default()
+    let mut lower_channel_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Percentage(20); 5])
-        .split(chanel_layout[1]);
+        .split(channel_layout[1])
+        .to_vec();
 
-    return (base_layer, general_layout, main_layout, chanel_layout);
+    let mut channel_layout = Vec::<Rect>::new();
+    channel_layout.append(&mut upper_channel_layout);
+    channel_layout.append(&mut lower_channel_layout);
+
+    return (base_layer, general_layout, main_layout, channel_layout.into());
 }
